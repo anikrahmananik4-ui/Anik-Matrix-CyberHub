@@ -3,300 +3,273 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Anik-Matrix Cyber-Hub</title>
+    <title>WA Style P2P Hub</title>
     <script src="https://unpkg.com/peerjs@1.4.7/dist/peerjs.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Segoe+UI:wght@400;700&display=swap" rel="stylesheet">
     <style>
-        :root { --neon: #00f2ff; --danger: #ff0055; --success: #00ff66; --glass: rgba(255, 255, 255, 0.1); }
-        body { margin: 0; background: #020205; color: white; font-family: 'Orbitron', sans-serif; display: flex; justify-content: center; align-items: center; height: 100vh; overflow: hidden; }
+        :root { --wa-green: #00a884; --wa-dark: #111b21; --wa-chat-bg: #0b141a; --wa-input-bg: #2a3942; --wa-bubble-me: #005c4b; --wa-bubble-friend: #202c33; --wa-text: #e9edef; --wa-gray: #8696a0; --wa-danger: #ea4335; }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: var(--wa-dark); color: var(--wa-text); height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
 
-        #bg { position: fixed; top: 0; left: 0; z-index: -1; opacity: 0.4; }
+        /* Header */
+        .header { background: #202c33; padding: 10px 16px; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid #2a3942; z-index: 10; }
+        .header-title { font-size: 16px; font-weight: bold; color: var(--wa-text); display: flex; align-items: center; gap: 10px; }
+        .header-title span { color: var(--wa-green); }
+        .header-actions { display: flex; gap: 15px; }
+        .icon-btn { background: none; border: none; color: var(--wa-gray); font-size: 20px; cursor: pointer; padding: 5px; border-radius: 50%; transition: 0.2s; }
+        .icon-btn:hover { color: var(--wa-text); }
 
-        .hub-container { background: var(--glass); backdrop-filter: blur(15px); padding: 25px; border-radius: 20px; border: 1px solid rgba(255, 255, 255, 0.1); width: 90%; max-width: 400px; text-align: center; box-shadow: 0 0 40px rgba(0, 242, 255, 0.1); max-height: 95vh; overflow-y: auto; }
-        .hub-container::-webkit-scrollbar { width: 5px; }
-        .hub-container::-webkit-scrollbar-thumb { background: var(--neon); border-radius: 10px; }
+        /* Main Container */
+        .main-container { display: flex; flex: 1; overflow: hidden; position: relative; }
         
-        .header { font-size: 12px; letter-spacing: 3px; color: var(--neon); margin-bottom: 15px; text-shadow: 0 0 10px var(--neon); }
-
-        .video-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 15px; }
-        video { width: 100%; border-radius: 10px; background: black; border: 1px solid var(--neon); transform: scaleX(-1); transition: 0.3s; }
-        video.active-call { box-shadow: 0 0 15px var(--neon); }
-
-        #chatBox { height: 100px; background: rgba(0,0,0,0.5); border-radius: 10px; overflow-y: auto; padding: 10px; font-size: 11px; text-align: left; margin-bottom: 10px; border: 1px solid #333; scrollbar-width: thin; scrollbar-color: var(--neon) black; }
-        .msg { margin-bottom: 5px; border-bottom: 1px solid #222; padding-bottom: 2px; word-break: break-all; }
-        .msg.me { color: var(--neon); }
-        .msg.system { color: var(--danger); font-size: 10px; text-align: center; border: none; }
-
-        input { width: 100%; background: rgba(0,0,0,0.3); border: 1px solid #444; padding: 10px; border-radius: 5px; color: white; box-sizing: border-box; margin-bottom: 10px; outline: none; font-family: 'Orbitron', sans-serif; font-size: 11px; }
-        input:focus { border-color: var(--neon); box-shadow: 0 0 5px var(--neon); }
-
-        .controls { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 15px; }
-        button { padding: 10px; border-radius: 5px; border: none; font-weight: bold; cursor: pointer; text-transform: uppercase; font-size: 10px; font-family: 'Orbitron', sans-serif; transition: 0.2s; }
-        button:disabled { opacity: 0.3; cursor: not-allowed; }
-        .btn-call { background: var(--neon); color: black; }
-        .btn-call:hover:not(:disabled) { box-shadow: 0 0 15px var(--neon); }
-        .btn-hangup { background: var(--danger); color: white; }
-        .btn-hangup:hover:not(:disabled) { box-shadow: 0 0 15px var(--danger); }
-        .btn-link { background: var(--success); color: black; }
-        .btn-accept { background: var(--success); color: black; animation: pulse 1s infinite; }
+        /* Sidebar */
+        .sidebar { width: 100%; background: var(--wa-dark); display: flex; flex-direction: column; transition: 0.3s; z-index: 5; }
+        .sidebar.hidden { display: none; }
         
-        @keyframes pulse { 0% { box-shadow: 0 0 0 0 rgba(0, 255, 102, 0.7); } 70% { box-shadow: 0 0 0 10px rgba(0, 255, 102, 0); } 100% { box-shadow: 0 0 0 0 rgba(0, 255, 102, 0); } }
-
-        #setupScreen { display: block; }
-        #hubScreen { display: none; }
-        #codenameInput { font-size: 14px; text-align: center; letter-spacing: 2px; text-transform: lowercase; }
-
-        #profileSection { margin-bottom: 15px; padding: 10px; border: 1px solid #333; border-radius: 10px; background: rgba(0,0,0,0.2); }
-        #myName { font-size: 14px; color: var(--success); margin-bottom: 10px; cursor: pointer; text-shadow: 0 0 5px var(--success); }
-        #qrcode { display: inline-block; padding: 8px; background: white; border-radius: 8px; box-shadow: 0 0 15px rgba(0, 242, 255, 0.3); }
+        .qr-section { background: #111b21; padding: 15px; border-bottom: 1px solid #2a3942; text-align: center; }
+        .qr-section input { width: 100%; background: var(--wa-input-bg); border: none; padding: 10px; border-radius: 8px; color: white; outline: none; margin-bottom: 10px; text-align: center; }
+        .qr-section button { width: 100%; background: var(--wa-green); color: white; border: none; padding: 10px; border-radius: 8px; font-weight: bold; cursor: pointer; }
+        #qrcode { display: inline-block; padding: 8px; background: white; border-radius: 8px; margin-top: 10px; }
         #qrcode img { display: block; }
+        .my-id-display { font-size: 11px; color: var(--wa-green); margin-top: 8px; cursor: pointer; }
 
-        #pttBtn { width: 70px; height: 70px; border-radius: 50%; background: black; border: 3px solid var(--danger); color: var(--danger); font-size: 9px; margin: 0 auto 15px auto; cursor: pointer; display: flex; align-items: center; justify-content: center; box-shadow: 0 0 10px var(--danger); transition: 0.2s; user-select: none; }
-        #pttBtn:active { background: var(--danger); color: black; box-shadow: 0 0 25px var(--danger); transform: scale(0.95); }
-        #pttBtn.transmitting { background: var(--danger); color: black; box-shadow: 0 0 25px var(--danger); }
+        /* Chat Area */
+        .chat-area { flex: 1; display: flex; flex-direction: column; background: var(--wa-chat-bg); position: relative; }
+        .chat-header { background: #202c33; padding: 10px 16px; display: flex; align-items: center; justify-content: space-between; }
+        .chat-user-info { display: flex; flex-direction: column; }
+        .chat-user-name { font-weight: bold; font-size: 16px; }
+        .chat-user-status { font-size: 12px; color: var(--wa-gray); }
+        .call-btns { display: flex; gap: 15px; }
+        .call-btn { background: none; border: none; color: var(--wa-gray); font-size: 22px; cursor: pointer; transition: 0.2s; }
+        .call-btn:hover { color: var(--wa-green); }
+
+        .chat-bg { flex: 1; overflow-y: auto; padding: 15px; background-image: url('https://upload.wikimedia.org/wikipedia/commons/5/56/WhatsApp_chat_background_image.jpg'); background-size: cover; opacity: 0.9; display: flex; flex-direction: column; gap: 5px; }
+        .chat-bg::-webkit-scrollbar { width: 6px; }
+        .chat-bg::-webkit-scrollbar-thumb { background: #374045; border-radius: 10px; }
+
+        .msg { max-width: 75%; padding: 8px 12px; border-radius: 8px; font-size: 14px; position: relative; line-height: 1.4; }
+        .msg.me { background: var(--wa-bubble-me); align-self: flex-end; border-top-right-radius: 0; }
+        .msg.friend { background: var(--wa-bubble-friend); align-self: flex-start; border-top-left-radius: 0; }
+        .msg.system { background: transparent; color: var(--wa-gray); align-self: center; font-size: 12px; padding: 5px; border-radius: 5px; text-align: center; max-width: 90%; }
+        .msg-time { font-size: 11px; color: rgba(255,255,255,0.5); text-align: right; margin-top: 4px; }
+
+        /* Input Area */
+        .input-area { background: #202c33; padding: 8px 16px; display: flex; align-items: center; gap: 10px; }
+        .input-area input { flex: 1; background: var(--wa-input-bg); border: none; padding: 10px 15px; border-radius: 8px; color: white; outline: none; font-size: 14px; }
+        .send-btn { background: var(--wa-green); border: none; color: white; width: 40px; height: 40px; border-radius: 50%; cursor: pointer; font-size: 18px; display: flex; align-items: center; justify-content: center; }
+
+        /* Call Screen (Overlay) */
+        .call-screen { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: var(--wa-dark); z-index: 20; display: none; flex-direction: column; align-items: center; justify-content: space-between; padding: 50px 20px; }
+        .call-screen.active { display: flex; }
+        .call-top { text-align: center; }
+        .call-avatar { width: 100px; height: 100px; background: var(--wa-input-bg); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 40px; margin: 0 auto 15px; }
+        .call-name { font-size: 24px; font-weight: bold; }
+        .call-status-text { color: var(--wa-gray); margin-top: 5px; }
+        
+        .call-videos { width: 100%; flex: 1; position: relative; border-radius: 15px; overflow: hidden; margin: 20px 0; background: #000; display: none; }
+        .call-videos.active { display: block; }
+        .call-videos video { width: 100%; height: 100%; object-fit: cover; position: absolute; top: 0; left: 0; }
+        #localVideo { z-index: 2; transform: scaleX(-1); width: 35% !important; height: auto !important; top: 15px; right: 15px; left: auto; border-radius: 10px; border: 2px solid var(--wa-green); }
+
+        .call-bottom { display: flex; flex-direction: column; align-items: center; gap: 15px; width: 100%; }
+        .call-controls { display: flex; gap: 20px; justify-content: center; margin-bottom: 20px; }
+        .ctrl-btn { width: 50px; height: 50px; border-radius: 50%; border: none; color: white; font-size: 20px; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: 0.2s; }
+        .ctrl-btn.mic { background: var(--wa-input-bg); }
+        .ctrl-btn.cam { background: var(--wa-input-bg); }
+        .ctrl-btn.speaker { background: var(--wa-input-bg); }
+        .ctrl-btn.hangup { background: var(--wa-danger); width: 60px; height: 60px; font-size: 24px; }
+        .ctrl-btn.active { background: white; color: var(--wa-dark); }
+        
+        .ptt-btn { width: 100%; padding: 15px; background: var(--wa-input-bg); border: 2px solid var(--wa-green); color: var(--wa-green); border-radius: 30px; font-weight: bold; font-size: 14px; cursor: pointer; user-select: none; text-align: center; display: none; }
+        .ptt-btn:active { background: var(--wa-green); color: white; }
+
+        /* Incoming Call Popup */
+        .incoming-call-popup { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: #202c33; padding: 30px; border-radius: 15px; border: 1px solid var(--wa-green); z-index: 25; display: none; text-align: center; box-shadow: 0 0 30px rgba(0,0,0,0.5); }
+        .incoming-call-popup.active { display: block; }
+        .incoming-btns { display: flex; gap: 30px; margin-top: 20px; justify-content: center; }
+        .inc-btn { width: 60px; height: 60px; border-radius: 50%; border: none; color: white; font-size: 24px; cursor: pointer; display: flex; align-items: center; justify-content: center; }
+        .inc-btn.accept { background: var(--wa-green); }
+        .inc-btn.reject { background: var(--wa-danger); }
     </style>
 </head>
 <body>
 
-<canvas id="bg"></canvas>
-
-<div class="hub-container" id="setupScreen">
-    <div class="header">ANIK-MATRIX CYBER-HUB</div>
-    <div style="font-size: 30px; margin-bottom: 20px;">👤</div>
-    <input type="text" id="codenameInput" placeholder="ENTER CODENAME" maxlength="15" onkeypress="if(event.key==='Enter') initNetwork()">
-    <button class="btn-call" style="width: 100%; padding: 15px;" onclick="initNetwork()">INITIALIZE NETWORK</button>
-    <div style="font-size: 9px; color: #666; margin-top: 15px;">NO LONG IDS. JUST SHARE YOUR CODENAME.</div>
-</div>
-
-<div class="hub-container" id="hubScreen">
-    <div class="header">ANIK-MATRIX CYBER-HUB</div>
-
-    <div class="video-grid">
-        <video id="localVideo" autoplay muted playsinline></video>
-        <video id="remoteVideo" autoplay playsinline></video>
+    <!-- Header -->
+    <div class="header">
+        <div class="header-title"><span>⚡</span> WA P2P Hub</div>
+        <div class="header-actions">
+            <button class="icon-btn" onclick="toggleSidebar()" title="Show/Hide Link Panel">🔗</button>
+        </div>
     </div>
 
-    <div id="profileSection">
-        <div id="myName" title="Click to copy">CODENAME: ...</div>
-        <div id="qrcode"></div>
-        <div style="font-size: 9px; color: #888; margin-top: 8px;">SCAN OR TYPE CODENAME TO LINK</div>
+    <!-- Main Container -->
+    <div class="main-container">
+        
+        <!-- Sidebar (Link & QR) -->
+        <div class="sidebar" id="sidebar">
+            <div class="qr-section">
+                <input type="text" id="codenameInput" placeholder="Enter your Codename" maxlength="15">
+                <button onclick="initNetwork()">GO ONLINE</button>
+                <div id="qrcode"></div>
+                <div class="my-id-display" id="myIdDisplay" onclick="copyId()">Tap to copy ID</div>
+                <div style="margin-top: 15px; border-top: 1px solid #2a3942; padding-top: 15px;">
+                    <input type="text" id="peerIdInput" placeholder="Friend's Codename">
+                    <button onclick="connectChat()">LINK CHAT</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Chat Area -->
+        <div class="chat-area">
+            <div class="chat-header">
+                <div class="chat-user-info">
+                    <div class="chat-user-name" id="chatPartnerName">No Chat Linked</div>
+                    <div class="chat-user-status" id="chatPartnerStatus">Enter codename to connect</div>
+                </div>
+                <div class="call-btns">
+                    <button class="call-btn" onclick="startCall('audio')" title="Audio Call">📞</button>
+                    <button class="call-btn" onclick="startCall('video')" title="Video Call">📹</button>
+                </div>
+            </div>
+
+            <div class="chat-bg" id="chatBox"></div>
+
+            <div class="input-area">
+                <input type="text" id="chatInput" placeholder="Type a message" onkeypress="if(event.key==='Enter') sendMessage()">
+                <button class="send-btn" onclick="sendMessage()">➤</button>
+            </div>
+
+            <!-- Incoming Call Popup -->
+            <div class="incoming-call-popup" id="incomingCallPopup">
+                <div style="font-size: 40px; margin-bottom: 10px;">📞</div>
+                <div style="font-size: 18px; font-weight: bold;" id="callerName">Unknown</div>
+                <div style="color: var(--wa-gray); margin-top: 5px;">Incoming Call...</div>
+                <div class="incoming-btns">
+                    <button class="inc-btn reject" onclick="rejectCall()">📵</button>
+                    <button class="inc-btn accept" onclick="answerCall()">📞</button>
+                </div>
+            </div>
+
+            <!-- Call Screen Overlay -->
+            <div class="call-screen" id="callScreen">
+                <div class="call-top">
+                    <div class="call-avatar">👤</div>
+                    <div class="call-name" id="callNameDisplay">Friend</div>
+                    <div class="call-status-text" id="callStatusText">Calling...</div>
+                </div>
+
+                <div class="call-videos" id="callVideos">
+                    <video id="remoteVideo" autoplay playsinline></video>
+                    <video id="localVideo" autoplay muted playsinline></video>
+                </div>
+
+                <div class="call-bottom">
+                    <div class="call-controls">
+                        <button class="ctrl-btn mic" id="micBtn" onclick="toggleMic()">🎤</button>
+                        <button class="ctrl-btn cam" id="camBtn" onclick="toggleCam()">📷</button>
+                        <button class="ctrl-btn hangup" onclick="hangUp()">📵</button>
+                        <button class="ctrl-btn speaker" id="speakerBtn">🔊</button>
+                    </div>
+                    <button class="ptt-btn" id="pttBtn">HOLD TO TALK (WALKIE TALKIE)</button>
+                </div>
+            </div>
+        </div>
     </div>
-
-    <!-- Incoming Call Popup (Hidden by default) -->
-    <div id="incomingCallPopup" style="display:none; margin-bottom: 10px; padding: 15px; border: 2px solid var(--success); background: rgba(0,255,102,0.1); border-radius: 10px;">
-        <div style="margin-bottom: 10px; color: var(--success); font-size: 12px;">INCOMING CALL...</div>
-        <button class="btn-accept" style="width: 100%; padding: 12px;" onclick="answerCall()">ACCEPT CALL</button>
-    </div>
-
-    <input type="text" id="peerId" placeholder="FRIEND'S CODENAME">
-
-    <div class="controls">
-        <button id="callBtn" class="btn-call" onclick="initiateVideoCall()">Video Call</button>
-        <button id="hangBtn" class="btn-hangup" onclick="hangUp()" disabled>Hang Up</button>
-        <button class="btn-link" onclick="connectChat()" style="grid-column: span 2;">Link Chat</button>
-    </div>
-
-    <div id="chatBox"></div>
-    <input type="text" id="chatInput" placeholder="Secure Message..." onkeypress="if(event.key==='Enter') sendMessage()">
-
-    <div id="pttBtn">HOLD<br>WALKIE</div>
-    <div id="status" style="font-size: 10px; color: #666; margin-top: 10px;">SYSTEM STANDBY</div>
-</div>
 
 <script>
-    // --- MATRIX RAIN ---
-    const canvas = document.getElementById('bg');
-    const ctx = canvas.getContext('2d');
-    canvas.width = window.innerWidth; canvas.height = window.innerHeight;
-    const letters = "MATRIX01"; const fontSize = 12; const columns = canvas.width / fontSize;
-    const drops = Array(Math.floor(columns)).fill(1);
-    function drawMatrix() {
-        ctx.fillStyle = "rgba(2, 2, 5, 0.05)"; ctx.fillRect(0, 0, canvas.width, canvas.height);
-        ctx.fillStyle = "#00f2ff"; ctx.font = fontSize + "px monospace";
-        for (let i = 0; i < drops.length; i++) {
-            const text = letters[Math.floor(Math.random() * letters.length)];
-            ctx.fillText(text, i * fontSize, drops[i] * fontSize);
-            if (drops[i] * fontSize > canvas.height && Math.random() > 0.975) drops[i] = 0;
-            drops[i]++;
-        }
-    }
-    setInterval(drawMatrix, 50);
-    window.addEventListener('resize', () => { canvas.width = window.innerWidth; canvas.height = window.innerHeight; });
-
-    // --- VARIABLES ---
+    // --- PEER & STATE LOGIC ---
     let peer;
     let conn = null;         
     let activeCall = null;   
     let localStream = null;
-    let pendingCall = null;  // For incoming calls waiting to be answered
-    
-    const status = document.getElementById('status');
+    let pendingCall = null;
+    let isMicOn = true;
+    let isCamOn = true;
+    let callType = 'video'; // 'video' or 'audio'
+
+    const chatBox = document.getElementById('chatBox');
     const localVideo = document.getElementById('localVideo');
     const remoteVideo = document.getElementById('remoteVideo');
-    const callBtn = document.getElementById('callBtn');
-    const hangBtn = document.getElementById('hangBtn');
-    const pttBtn = document.getElementById('pttBtn');
-    const peerIdInput = document.getElementById('peerId');
+    const callScreen = document.getElementById('callScreen');
+    const callVideos = document.getElementById('callVideos');
 
-    // --- STEP 1: INIT NETWORK ---
+    // --- INIT NETWORK ---
     function initNetwork() {
-        myCodeName = document.getElementById('codenameInput').value.trim().toLowerCase().replace(/\s+/g, '');
+        const myCodeName = document.getElementById('codenameInput').value.trim().toLowerCase();
         if (!myCodeName) return alert("Please enter a codename!");
-
-        document.getElementById('setupScreen').style.display = 'none';
-        document.getElementById('hubScreen').style.display = 'block';
 
         peer = new Peer(myCodeName);
 
         peer.on('open', id => {
-            document.getElementById('myName').innerText = "CODENAME: " + id;
-            status.innerText = "ONLINE - AWAITING LINK";
+            document.getElementById('myIdDisplay').innerText = "ID: " + id + " (Tap to copy)";
+            appendMsg("System", "You are online as " + id);
             
             const currentUrl = window.location.href.split('?')[0];
             const shareUrl = currentUrl + "?id=" + id;
             const qrcodeContainer = document.getElementById('qrcode');
             qrcodeContainer.innerHTML = ""; 
-            new QRCode(qrcodeContainer, { text: shareUrl, width: 100, height: 100, colorDark : "#000000", colorLight : "#ffffff", correctLevel : QRCode.CorrectLevel.H });
+            new QRCode(qrcodeContainer, { text: shareUrl, width: 100, height: 100, colorDark : "#000000", colorLight : "#ffffff" });
 
             const urlParams = new URLSearchParams(window.location.search);
             const targetId = urlParams.get('id');
             if (targetId && targetId !== id) {
-                peerIdInput.value = targetId;
-                appendMsg("System", "QR Scanned! Auto-linking to " + targetId + "...");
+                document.getElementById('peerIdInput').value = targetId;
                 setTimeout(() => connectChat(), 1000);
             }
         });
 
         peer.on('connection', c => {
             conn = c;
-            peerIdInput.value = c.peer;
+            document.getElementById('peerIdInput').value = c.peer;
             setupChat();
         });
 
-        // Handle Incoming Call (Don't auto-answer to fix browser permissions)
         peer.on('call', call => {
             pendingCall = call;
-            document.getElementById('incomingCallPopup').style.display = 'block';
-            appendMsg("System", "Incoming call from " + call.peer);
+            callType = call.metadata.type || 'video';
+            document.getElementById('callerName').innerText = call.peer;
+            document.getElementById('incomingCallPopup').classList.add('active');
         });
 
         peer.on('error', err => {
             appendMsg("System", "Error: " + err.type);
-            if(err.type === 'unavailable-id') alert("Codename already taken! Please refresh and try another.");
-            status.innerText = "CONNECTION ERROR";
+            if(err.type === 'unavailable-id') alert("Codename taken! Try another.");
         });
     }
 
-    // Answer Incoming Call
-    async function answerCall() {
-        if (!pendingCall) return;
-        document.getElementById('incomingCallPopup').style.display = 'none';
-        
-        // Get media on button click (Fixes Audio/Video permissions)
-        localStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
-        localVideo.srcObject = localStream;
-        localVideo.classList.add('active-call');
-        
-        pendingCall.answer(localStream);
-        setupCall(pendingCall);
-        pendingCall = null;
-    }
-
-    document.getElementById('myName').addEventListener('click', function() {
-        navigator.clipboard.writeText(peer.id);
-        appendMsg("System", "Codename Copied!");
-    });
-
-    // --- OUTGOING CALL LOGIC ---
-    async function initiateVideoCall() {
-        const friendId = peerIdInput.value.trim().toLowerCase();
-        if (!friendId) return appendMsg("System", "Enter Friend's Codename!");
-        if (activeCall) return appendMsg("System", "Already in a call!");
-
-        // Get media on button click (Fixes Audio/Video permissions)
-        localStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
-        localVideo.srcObject = localStream;
-        localVideo.classList.add('active-call');
-
-        const call = peer.call(friendId, localStream);
-        setupCall(call);
-    }
-
-    function setupCall(call) {
-        activeCall = call;
-        callBtn.disabled = true; 
-        hangBtn.disabled = false;
-
-        call.on('stream', rStream => {
-            remoteVideo.srcObject = rStream; 
-            remoteVideo.classList.add('active-call'); 
-            status.innerText = "CONNECTED (UNMUTED)";
-        });
-        
-        call.on('close', hangUp);
-        call.on('error', hangUp);
-    }
-
-    function hangUp() {
-        if (activeCall) activeCall.close();
-        activeCall = null; 
-        
-        // Stop all tracks (Camera & Mic light off)
-        if (localStream) {
-            localStream.getTracks().forEach(track => track.stop());
-            localStream = null; 
-            localVideo.srcObject = null; 
-            localVideo.classList.remove('active-call');
+    function copyId() {
+        if(peer && peer.id) {
+            navigator.clipboard.writeText(peer.id);
+            appendMsg("System", "Codename copied!");
         }
-        
-        remoteVideo.srcObject = null; 
-        remoteVideo.classList.remove('active-call');
-        callBtn.disabled = false; 
-        hangBtn.disabled = true;
-        status.innerText = "DISCONNECTED"; 
-        appendMsg("System", "Call Ended.");
     }
 
-    // --- WALKIE TALKIE LOGIC (Mute/Unmute) ---
-    pttBtn.addEventListener('mousedown', () => {
-        if (!localStream || !activeCall) return appendMsg("System", "Must be in a call first!");
-        localStream.getAudioTracks().forEach(track => track.enabled = true);
-        pttBtn.classList.add('transmitting'); 
-        status.innerText = "🎤 TRANSMITTING...";
-    });
-
-    const stopTransmitting = () => {
-        if (localStream) {
-            localStream.getAudioTracks().forEach(track => track.enabled = false);
-        }
-        pttBtn.classList.remove('transmitting');
-        if (activeCall) status.innerText = "CONNECTED (MUTED)";
-    };
-
-    pttBtn.addEventListener('mouseup', stopTransmitting);
-    pttBtn.addEventListener('mouseleave', stopTransmitting); 
+    function toggleSidebar() {
+        document.getElementById('sidebar').classList.toggle('hidden');
+    }
 
     // --- CHAT LOGIC ---
     function connectChat() {
-        const friendId = peerIdInput.value.trim().toLowerCase();
+        const friendId = document.getElementById('peerIdInput').value.trim().toLowerCase();
         if (!friendId) return appendMsg("System", "Enter Friend's Codename!");
-        if (conn) return appendMsg("System", "Chat already linked!");
-        
+        if (conn) return;
         conn = peer.connect(friendId);
         setupChat();
-        status.innerText = "LINKING CHAT...";
     }
 
     function setupChat() {
         conn.on('open', () => {
-            appendMsg("System", "Chat Secured with " + conn.peer + "!");
-            status.innerText = "CHAT LINKED";
+            document.getElementById('chatPartnerName').innerText = conn.peer;
+            document.getElementById('chatPartnerStatus').innerText = "Online";
+            appendMsg("System", "Chat secured with " + conn.peer);
+            document.getElementById('sidebar').classList.add('hidden'); // Hide sidebar on connect
         });
-        conn.on('data', data => appendMsg(conn.peer, data));
+        conn.on('data', data => appendMsg("Friend", data));
         conn.on('close', () => {
-            appendMsg("System", "Chat Disconnected.");
-            conn = null; status.innerText = "CHAT LOST";
+            document.getElementById('chatPartnerName').innerText = "Disconnected";
+            document.getElementById('chatPartnerStatus').innerText = "Offline";
+            conn = null;
         });
     }
 
@@ -306,18 +279,169 @@
             conn.send(msg);
             appendMsg("Me", msg);
             document.getElementById('chatInput').value = "";
-        } else if (!conn) {
-            appendMsg("System", "No chat connection!");
         }
     }
 
     function appendMsg(user, text) {
         const div = document.createElement('div');
-        div.className = "msg " + (user === "Me" ? "me" : (user === "System" ? "system" : ""));
-        div.innerHTML = user !== "System" ? `[${user}]: ${text}` : text;
-        document.getElementById('chatBox').appendChild(div);
-        document.getElementById('chatBox').scrollTop = document.getElementById('chatBox').scrollHeight;
+        const time = new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+        
+        if (user === "System") {
+            div.className = "msg system";
+            div.innerHTML = text;
+        } else {
+            div.className = `msg ${user === "Me" ? "me" : "friend"}`;
+            div.innerHTML = `${text}<div class="msg-time">${time}</div>`;
+        }
+        
+        chatBox.appendChild(div);
+        chatBox.scrollTop = chatBox.scrollHeight;
     }
+
+    // --- CALL LOGIC ---
+    async function startCall(type) {
+        if (!conn) return appendMsg("System", "Link chat first!");
+        if (activeCall) return;
+
+        callType = type;
+        isMicOn = true;
+        isCamOn = (type === 'video');
+
+        try {
+            localStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+            
+            // Immediately disable cam if audio call
+            if (type === 'audio') {
+                localStream.getVideoTracks().forEach(track => track.enabled = false);
+            }
+
+            const call = peer.call(conn.peer, localStream, { metadata: { type: type } });
+            setupCall(call);
+            showCallScreen(conn.peer, type);
+        } catch (err) {
+            appendMsg("System", "Camera/Mic permission denied!");
+        }
+    }
+
+    async function answerCall() {
+        if (!pendingCall) return;
+        document.getElementById('incomingCallPopup').classList.remove('active');
+        
+        isMicOn = true;
+        isCamOn = (pendingCall.metadata.type === 'video');
+
+        try {
+            localStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+            
+            if (pendingCall.metadata.type === 'audio') {
+                localStream.getVideoTracks().forEach(track => track.enabled = false);
+            }
+
+            pendingCall.answer(localStream);
+            setupCall(pendingCall);
+            showCallScreen(pendingCall.peer, pendingCall.metadata.type);
+            pendingCall = null;
+        } catch (err) {
+            appendMsg("System", "Permission denied!");
+            rejectCall();
+        }
+    }
+
+    function rejectCall() {
+        if(pendingCall) pendingCall.close();
+        pendingCall = null;
+        document.getElementById('incomingCallPopup').classList.remove('active');
+    }
+
+    function setupCall(call) {
+        activeCall = call;
+        updateCallUI();
+
+        call.on('stream', rStream => {
+            remoteVideo.srcObject = rStream;
+            document.getElementById('callStatusText').innerText = "Connected";
+        });
+        
+        call.on('close', hangUp);
+        call.on('error', hangUp);
+    }
+
+    function showCallScreen(partnerName, type) {
+        document.getElementById('callNameDisplay').innerText = partnerName;
+        document.getElementById('callStatusText').innerText = "Calling...";
+        
+        if (type === 'video') {
+            callVideos.classList.add('active');
+            localVideo.srcObject = localStream;
+            document.getElementById('pttBtn').style.display = 'none';
+        } else {
+            callVideos.classList.remove('active');
+            document.getElementById('pttBtn').style.display = 'block';
+        }
+        
+        callScreen.classList.add('active');
+        updateCallUI();
+    }
+
+    function hangUp() {
+        if (activeCall) activeCall.close();
+        activeCall = null;
+        
+        if (localStream) {
+            localStream.getTracks().forEach(track => track.stop());
+            localStream = null;
+        }
+        
+        localVideo.srcObject = null;
+        remoteVideo.srcObject = null;
+        callVideos.classList.remove('active');
+        callScreen.classList.remove('active');
+        document.getElementById('incomingCallPopup').classList.remove('active');
+    }
+
+    // --- IN-CALL CONTROLS ---
+    function toggleMic() {
+        if (!localStream) return;
+        isMicOn = !isMicOn;
+        localStream.getAudioTracks().forEach(track => track.enabled = isMicOn);
+        updateCallUI();
+    }
+
+    function toggleCam() {
+        if (!localStream || callType === 'audio') return; // No cam toggle in audio call
+        isCamOn = !isCamOn;
+        localStream.getVideoTracks().forEach(track => track.enabled = isCamOn);
+        updateCallUI();
+    }
+
+    function updateCallUI() {
+        document.getElementById('micBtn').classList.toggle('active', !isMicOn);
+        document.getElementById('micBtn').innerText = isMicOn ? '🎤' : '🔇';
+        
+        document.getElementById('camBtn').classList.toggle('active', !isCamOn);
+        document.getElementById('camBtn').innerText = isCamOn ? '📷' : '🚫';
+    }
+
+    // Walkie Talkie for Audio Call
+    const pttBtn = document.getElementById('pttBtn');
+    pttBtn.addEventListener('mousedown', () => {
+        if (!localStream || !activeCall) return;
+        localStream.getAudioTracks().forEach(track => track.enabled = true);
+        pttBtn.innerText = "🎤 TRANSMITTING...";
+        pttBtn.style.background = 'var(--wa-green)';
+        pttBtn.style.color = 'white';
+    });
+
+    const stopPtt = () => {
+        if (!localStream) return;
+        localStream.getAudioTracks().forEach(track => track.enabled = false);
+        pttBtn.innerText = "HOLD TO TALK (WALKIE TALKIE)";
+        pttBtn.style.background = 'var(--wa-input-bg)';
+        pttBtn.style.color = 'var(--wa-green)';
+    };
+
+    pttBtn.addEventListener('mouseup', stopPtt);
+    pttBtn.addEventListener('mouseleave', stopPtt);
 
 </script>
 </body>
