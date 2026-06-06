@@ -6,14 +6,13 @@
     <title>WA Style P2P Hub</title>
     <script src="https://unpkg.com/peerjs@1.4.7/dist/peerjs.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Segoe+UI:wght@400;700&display=swap" rel="stylesheet">
     <style>
         :root { --wa-green: #00a884; --wa-dark: #111b21; --wa-chat-bg: #0b141a; --wa-input-bg: #2a3942; --wa-bubble-me: #005c4b; --wa-bubble-friend: #202c33; --wa-text: #e9edef; --wa-gray: #8696a0; --wa-danger: #ea4335; }
         * { box-sizing: border-box; margin: 0; padding: 0; }
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: var(--wa-dark); color: var(--wa-text); height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: var(--wa-dark); color: var(--wa-text); height: 100vh; width: 100vw; display: flex; flex-direction: column; overflow: hidden; }
 
         /* Header */
-        .header { background: #202c33; padding: 10px 16px; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid #2a3942; z-index: 10; }
+        .header { background: #202c33; padding: 10px 16px; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid #2a3942; z-index: 10; flex-shrink: 0; }
         .header-title { font-size: 16px; font-weight: bold; color: var(--wa-text); display: flex; align-items: center; gap: 10px; }
         .header-title span { color: var(--wa-green); }
         .header-actions { display: flex; gap: 15px; }
@@ -24,7 +23,7 @@
         .main-container { display: flex; flex: 1; overflow: hidden; position: relative; }
         
         /* Sidebar */
-        .sidebar { width: 100%; background: var(--wa-dark); display: flex; flex-direction: column; transition: 0.3s; z-index: 5; }
+        .sidebar { width: 100%; background: var(--wa-dark); display: flex; flex-direction: column; transition: 0.3s; z-index: 5; flex-shrink: 0; }
         .sidebar.hidden { display: none; }
         
         .qr-section { background: #111b21; padding: 15px; border-bottom: 1px solid #2a3942; text-align: center; }
@@ -35,8 +34,8 @@
         .my-id-display { font-size: 11px; color: var(--wa-green); margin-top: 8px; cursor: pointer; }
 
         /* Chat Area */
-        .chat-area { flex: 1; display: flex; flex-direction: column; background: var(--wa-chat-bg); position: relative; }
-        .chat-header { background: #202c33; padding: 10px 16px; display: flex; align-items: center; justify-content: space-between; }
+        .chat-area { flex: 1; display: flex; flex-direction: column; background: var(--wa-chat-bg); position: relative; width: 100%; }
+        .chat-header { background: #202c33; padding: 10px 16px; display: flex; align-items: center; justify-content: space-between; flex-shrink: 0; }
         .chat-user-info { display: flex; flex-direction: column; }
         .chat-user-name { font-weight: bold; font-size: 16px; }
         .chat-user-status { font-size: 12px; color: var(--wa-gray); }
@@ -48,19 +47,22 @@
         .chat-bg::-webkit-scrollbar { width: 6px; }
         .chat-bg::-webkit-scrollbar-thumb { background: #374045; border-radius: 10px; }
 
-        .msg { max-width: 75%; padding: 8px 12px; border-radius: 8px; font-size: 14px; position: relative; line-height: 1.4; }
+        .msg { max-width: 75%; padding: 8px 12px; border-radius: 8px; font-size: 14px; position: relative; line-height: 1.4; word-wrap: break-word; }
         .msg.me { background: var(--wa-bubble-me); align-self: flex-end; border-top-right-radius: 0; }
         .msg.friend { background: var(--wa-bubble-friend); align-self: flex-start; border-top-left-radius: 0; }
         .msg.system { background: transparent; color: var(--wa-gray); align-self: center; font-size: 12px; padding: 5px; border-radius: 5px; text-align: center; max-width: 90%; }
         .msg-time { font-size: 11px; color: rgba(255,255,255,0.5); text-align: right; margin-top: 4px; }
+        .file-link { color: #fff; text-decoration: underline; display: inline-block; margin-top: 5px; background: rgba(0,0,0,0.2); padding: 3px 8px; border-radius: 4px; }
 
         /* Input Area */
-        .input-area { background: #202c33; padding: 8px 16px; display: flex; align-items: center; gap: 10px; }
+        .input-area { background: #202c33; padding: 8px 16px; display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
         .input-area input { flex: 1; background: var(--wa-input-bg); border: none; padding: 10px 15px; border-radius: 8px; color: white; outline: none; font-size: 14px; }
+        .attach-btn { background: none; border: none; color: var(--wa-gray); font-size: 24px; cursor: pointer; transition: 0.2s; }
+        .attach-btn:hover { color: var(--wa-text); }
         .send-btn { background: var(--wa-green); border: none; color: white; width: 40px; height: 40px; border-radius: 50%; cursor: pointer; font-size: 18px; display: flex; align-items: center; justify-content: center; }
 
-        /* Call Screen (Overlay) */
-        .call-screen { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: var(--wa-dark); z-index: 20; display: none; flex-direction: column; align-items: center; justify-content: space-between; padding: 50px 20px; }
+        /* Call Screen (FULL SCREEN OVERLAY) */
+        .call-screen { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: var(--wa-dark); z-index: 100; display: none; flex-direction: column; align-items: center; justify-content: space-between; padding: 50px 20px; }
         .call-screen.active { display: flex; }
         .call-top { text-align: center; }
         .call-avatar { width: 100px; height: 100px; background: var(--wa-input-bg); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 40px; margin: 0 auto 15px; }
@@ -72,7 +74,7 @@
         .call-videos video { width: 100%; height: 100%; object-fit: cover; position: absolute; top: 0; left: 0; }
         #localVideo { z-index: 2; transform: scaleX(-1); width: 35% !important; height: auto !important; top: 15px; right: 15px; left: auto; border-radius: 10px; border: 2px solid var(--wa-green); }
 
-        .call-bottom { display: flex; flex-direction: column; align-items: center; gap: 15px; width: 100%; }
+        .call-bottom { display: flex; flex-direction: column; align-items: center; gap: 15px; width: 100%; padding-bottom: 30px; }
         .call-controls { display: flex; gap: 20px; justify-content: center; margin-bottom: 20px; }
         .ctrl-btn { width: 50px; height: 50px; border-radius: 50%; border: none; color: white; font-size: 20px; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: 0.2s; }
         .ctrl-btn.mic { background: var(--wa-input-bg); }
@@ -85,12 +87,19 @@
         .ptt-btn:active { background: var(--wa-green); color: white; }
 
         /* Incoming Call Popup */
-        .incoming-call-popup { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: #202c33; padding: 30px; border-radius: 15px; border: 1px solid var(--wa-green); z-index: 25; display: none; text-align: center; box-shadow: 0 0 30px rgba(0,0,0,0.5); }
-        .incoming-call-popup.active { display: block; }
-        .incoming-btns { display: flex; gap: 30px; margin-top: 20px; justify-content: center; }
-        .inc-btn { width: 60px; height: 60px; border-radius: 50%; border: none; color: white; font-size: 24px; cursor: pointer; display: flex; align-items: center; justify-content: center; }
+        .incoming-call-popup { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(17, 27, 33, 0.95); z-index: 150; display: none; flex-direction: column; align-items: center; justify-content: center; text-align: center; box-shadow: 0 0 30px rgba(0,0,0,0.5); }
+        .incoming-call-popup.active { display: flex; }
+        .inc-avatar { width: 100px; height: 100px; background: var(--wa-input-bg); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 50px; margin-bottom: 20px; }
+        .incoming-btns { display: flex; gap: 60px; margin-top: 40px; justify-content: center; }
+        .inc-btn { width: 60px; height: 60px; border-radius: 50%; border: none; color: white; font-size: 24px; cursor: pointer; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 15px rgba(0,0,0,0.3); }
         .inc-btn.accept { background: var(--wa-green); }
         .inc-btn.reject { background: var(--wa-danger); }
+
+        @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.1); } 100% { transform: scale(1); } }
+        .pulse-anim { animation: pulse 1.5s infinite; }
+
+        /* Hide file input */
+        #fileInput { display: none; }
     </style>
 </head>
 <body>
@@ -136,44 +145,46 @@
             <div class="chat-bg" id="chatBox"></div>
 
             <div class="input-area">
+                <button class="attach-btn" onclick="document.getElementById('fileInput').click()">📎</button>
+                <input type="file" id="fileInput" onchange="sendFile(this)">
                 <input type="text" id="chatInput" placeholder="Type a message" onkeypress="if(event.key==='Enter') sendMessage()">
                 <button class="send-btn" onclick="sendMessage()">➤</button>
             </div>
+        </div>
+    </div>
 
-            <!-- Incoming Call Popup -->
-            <div class="incoming-call-popup" id="incomingCallPopup">
-                <div style="font-size: 40px; margin-bottom: 10px;">📞</div>
-                <div style="font-size: 18px; font-weight: bold;" id="callerName">Unknown</div>
-                <div style="color: var(--wa-gray); margin-top: 5px;">Incoming Call...</div>
-                <div class="incoming-btns">
-                    <button class="inc-btn reject" onclick="rejectCall()">📵</button>
-                    <button class="inc-btn accept" onclick="answerCall()">📞</button>
-                </div>
+    <!-- Incoming Call Popup (Full Screen) -->
+    <div class="incoming-call-popup" id="incomingCallPopup">
+        <div class="inc-avatar pulse-anim">👤</div>
+        <div style="font-size: 24px; font-weight: bold;" id="callerName">Unknown</div>
+        <div style="color: var(--wa-gray); margin-top: 10px; font-size: 16px;">Incoming Call...</div>
+        <div class="incoming-btns">
+            <button class="inc-btn reject" onclick="rejectCall()">📵</button>
+            <button class="inc-btn accept" onclick="answerCall()">📞</button>
+        </div>
+    </div>
+
+    <!-- Call Screen Overlay (Full Screen) -->
+    <div class="call-screen" id="callScreen">
+        <div class="call-top">
+            <div class="call-avatar">👤</div>
+            <div class="call-name" id="callNameDisplay">Friend</div>
+            <div class="call-status-text" id="callStatusText">Calling...</div>
+        </div>
+
+        <div class="call-videos" id="callVideos">
+            <video id="remoteVideo" autoplay playsinline></video>
+            <video id="localVideo" autoplay muted playsinline></video>
+        </div>
+
+        <div class="call-bottom">
+            <div class="call-controls">
+                <button class="ctrl-btn mic" id="micBtn" onclick="toggleMic()">🎤</button>
+                <button class="ctrl-btn cam" id="camBtn" onclick="toggleCam()">📷</button>
+                <button class="ctrl-btn hangup" onclick="hangUp()">📵</button>
+                <button class="ctrl-btn speaker" id="speakerBtn">🔊</button>
             </div>
-
-            <!-- Call Screen Overlay -->
-            <div class="call-screen" id="callScreen">
-                <div class="call-top">
-                    <div class="call-avatar">👤</div>
-                    <div class="call-name" id="callNameDisplay">Friend</div>
-                    <div class="call-status-text" id="callStatusText">Calling...</div>
-                </div>
-
-                <div class="call-videos" id="callVideos">
-                    <video id="remoteVideo" autoplay playsinline></video>
-                    <video id="localVideo" autoplay muted playsinline></video>
-                </div>
-
-                <div class="call-bottom">
-                    <div class="call-controls">
-                        <button class="ctrl-btn mic" id="micBtn" onclick="toggleMic()">🎤</button>
-                        <button class="ctrl-btn cam" id="camBtn" onclick="toggleCam()">📷</button>
-                        <button class="ctrl-btn hangup" onclick="hangUp()">📵</button>
-                        <button class="ctrl-btn speaker" id="speakerBtn">🔊</button>
-                    </div>
-                    <button class="ptt-btn" id="pttBtn">HOLD TO TALK (WALKIE TALKIE)</button>
-                </div>
-            </div>
+            <button class="ptt-btn" id="pttBtn">HOLD TO TALK (WALKIE TALKIE)</button>
         </div>
     </div>
 
@@ -186,13 +197,49 @@
     let pendingCall = null;
     let isMicOn = true;
     let isCamOn = true;
-    let callType = 'video'; // 'video' or 'audio'
+    let callType = 'video'; 
 
     const chatBox = document.getElementById('chatBox');
     const localVideo = document.getElementById('localVideo');
     const remoteVideo = document.getElementById('remoteVideo');
     const callScreen = document.getElementById('callScreen');
     const callVideos = document.getElementById('callVideos');
+
+    // --- AUDIO RINGTONE GENERATOR ---
+    const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    let ringToneInterval = null;
+
+    function playRingTone() {
+        stopRingTone(); // Clear any existing
+        let isOn = false;
+        ringToneInterval = setInterval(() => {
+            if (isOn) return;
+            isOn = true;
+            
+            const oscillator = audioCtx.createOscillator();
+            const gainNode = audioCtx.createGain();
+            oscillator.connect(gainNode);
+            gainNode.connect(audioCtx.destination);
+            
+            oscillator.type = 'sine';
+            oscillator.frequency.setValueAtTime(440, audioCtx.currentTime); // Frequency
+            
+            gainNode.gain.setValueAtTime(0.5, audioCtx.currentTime);
+            gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 1.5);
+            
+            oscillator.start(audioCtx.currentTime);
+            oscillator.stop(audioCtx.currentTime + 1.5);
+
+            setTimeout(() => { isOn = false; }, 2000);
+        }, 2500);
+    }
+
+    function stopRingTone() {
+        if (ringToneInterval) {
+            clearInterval(ringToneInterval);
+            ringToneInterval = null;
+        }
+    }
 
     // --- INIT NETWORK ---
     function initNetwork() {
@@ -230,11 +277,13 @@
             callType = call.metadata.type || 'video';
             document.getElementById('callerName').innerText = call.peer;
             document.getElementById('incomingCallPopup').classList.add('active');
+            playRingTone(); // Play ringtone on incoming call
         });
 
         peer.on('error', err => {
             appendMsg("System", "Error: " + err.type);
             if(err.type === 'unavailable-id') alert("Codename taken! Try another.");
+            stopRingTone();
         });
     }
 
@@ -263,9 +312,22 @@
             document.getElementById('chatPartnerName').innerText = conn.peer;
             document.getElementById('chatPartnerStatus').innerText = "Online";
             appendMsg("System", "Chat secured with " + conn.peer);
-            document.getElementById('sidebar').classList.add('hidden'); // Hide sidebar on connect
+            document.getElementById('sidebar').classList.add('hidden'); 
         });
-        conn.on('data', data => appendMsg("Friend", data));
+        conn.on('data', data => {
+            if (data.type === 'file') {
+                const blob = new Blob([data.file], { type: data.fileType });
+                const url = URL.createObjectURL(blob);
+                const isImage = data.fileType.startsWith('image/');
+                if (isImage) {
+                    appendMsg("Friend", `<img src="${url}" style="max-width:100%; border-radius:8px; margin-bottom:5px;"><br><a href="${url}" download="${data.fileName}" class="file-link">📥 ${data.fileName}</a>`);
+                } else {
+                    appendMsg("Friend", `📄 Document: <a href="${url}" download="${data.fileName}" class="file-link">📥 ${data.fileName}</a>`);
+                }
+            } else {
+                appendMsg("Friend", data.text || data);
+            }
+        });
         conn.on('close', () => {
             document.getElementById('chatPartnerName').innerText = "Disconnected";
             document.getElementById('chatPartnerStatus').innerText = "Offline";
@@ -276,10 +338,43 @@
     function sendMessage() {
         const msg = document.getElementById('chatInput').value;
         if (conn && conn.open && msg) {
-            conn.send(msg);
+            conn.send({ type: 'text', text: msg });
             appendMsg("Me", msg);
             document.getElementById('chatInput').value = "";
         }
+    }
+
+    function sendFile(inputElement) {
+        if (!conn || !conn.open) return appendMsg("System", "Connect to a friend first!");
+        const file = inputElement.files[0];
+        if (!file) return;
+
+        if (file.size > 5 * 1024 * 1024) { // Limit 5MB for P2P stability
+            return appendMsg("System", "File too large! Max 5MB.");
+        }
+
+        appendMsg("System", `Sending ${file.name}...`);
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            const fileData = e.target.result;
+            conn.send({
+                type: 'file',
+                file: fileData,
+                fileName: file.name,
+                fileType: file.type
+            });
+
+            const blob = new Blob([fileData], { type: file.type });
+            const url = URL.createObjectURL(blob);
+            const isImage = file.type.startsWith('image/');
+            if (isImage) {
+                appendMsg("Me", `<img src="${url}" style="max-width:100%; border-radius:8px; margin-bottom:5px;"><br><a href="${url}" download="${file.name}" class="file-link">📥 ${file.name}</a>`);
+            } else {
+                appendMsg("Me", `📄 Document: <a href="${url}" download="${file.name}" class="file-link">📥 ${file.name}</a>`);
+            }
+        };
+        reader.readAsArrayBuffer(file);
+        inputElement.value = ''; // reset input
     }
 
     function appendMsg(user, text) {
@@ -310,7 +405,6 @@
         try {
             localStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
             
-            // Immediately disable cam if audio call
             if (type === 'audio') {
                 localStream.getVideoTracks().forEach(track => track.enabled = false);
             }
@@ -318,14 +412,17 @@
             const call = peer.call(conn.peer, localStream, { metadata: { type: type } });
             setupCall(call);
             showCallScreen(conn.peer, type);
+            playRingTone(); // Play ringtone while calling
         } catch (err) {
             appendMsg("System", "Camera/Mic permission denied!");
+            stopRingTone();
         }
     }
 
     async function answerCall() {
         if (!pendingCall) return;
         document.getElementById('incomingCallPopup').classList.remove('active');
+        stopRingTone(); // Stop ringtone when answered
         
         isMicOn = true;
         isCamOn = (pendingCall.metadata.type === 'video');
@@ -351,6 +448,7 @@
         if(pendingCall) pendingCall.close();
         pendingCall = null;
         document.getElementById('incomingCallPopup').classList.remove('active');
+        stopRingTone();
     }
 
     function setupCall(call) {
@@ -360,6 +458,7 @@
         call.on('stream', rStream => {
             remoteVideo.srcObject = rStream;
             document.getElementById('callStatusText').innerText = "Connected";
+            stopRingTone(); // Stop ringtone when connection is established
         });
         
         call.on('close', hangUp);
@@ -397,6 +496,8 @@
         callVideos.classList.remove('active');
         callScreen.classList.remove('active');
         document.getElementById('incomingCallPopup').classList.remove('active');
+        stopRingTone();
+        appendMsg("System", "Call ended.");
     }
 
     // --- IN-CALL CONTROLS ---
@@ -408,7 +509,7 @@
     }
 
     function toggleCam() {
-        if (!localStream || callType === 'audio') return; // No cam toggle in audio call
+        if (!localStream || callType === 'audio') return; 
         isCamOn = !isCamOn;
         localStream.getVideoTracks().forEach(track => track.enabled = isCamOn);
         updateCallUI();
@@ -442,6 +543,13 @@
 
     pttBtn.addEventListener('mouseup', stopPtt);
     pttBtn.addEventListener('mouseleave', stopPtt);
+
+    // Resume audio context on first click (Browser autoplay policy)
+    document.addEventListener('click', () => {
+        if (audioCtx.state === 'suspended') {
+            audioCtx.resume();
+        }
+    }, { once: true });
 
 </script>
 </body>
