@@ -2,14 +2,17 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>WA Style P2P Hub</title>
     <script src="https://unpkg.com/peerjs@1.4.7/dist/peerjs.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     <style>
         :root { --wa-green: #00a884; --wa-dark: #111b21; --wa-chat-bg: #0b141a; --wa-input-bg: #2a3942; --wa-bubble-me: #005c4b; --wa-bubble-friend: #202c33; --wa-text: #e9edef; --wa-gray: #8696a0; --wa-danger: #ea4335; }
         * { box-sizing: border-box; margin: 0; padding: 0; }
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: var(--wa-dark); color: var(--wa-text); height: 100vh; width: 100vw; display: flex; flex-direction: column; overflow: hidden; }
+        
+        /* Dynamic VH for mobile keyboard issue */
+        html, body { height: 100%; height: 100dvh; overflow: hidden; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: var(--wa-dark); color: var(--wa-text); display: flex; flex-direction: column; }
 
         /* Header */
         .header { background: #202c33; padding: 10px 16px; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid #2a3942; z-index: 10; flex-shrink: 0; }
@@ -19,11 +22,11 @@
         .icon-btn { background: none; border: none; color: var(--wa-gray); font-size: 20px; cursor: pointer; padding: 5px; border-radius: 50%; transition: 0.2s; }
         .icon-btn:hover { color: var(--wa-text); }
 
-        /* Main Container */
-        .main-container { display: flex; flex: 1; overflow: hidden; position: relative; }
+        /* Main Container - Fixed Flex Structure */
+        .main-container { display: flex; flex-direction: column; flex: 1; min-height: 0; overflow: hidden; position: relative; }
         
         /* Sidebar */
-        .sidebar { width: 100%; background: var(--wa-dark); display: flex; flex-direction: column; transition: 0.3s; z-index: 5; flex-shrink: 0; }
+        .sidebar { background: var(--wa-dark); display: flex; flex-direction: column; flex-shrink: 0; z-index: 5; }
         .sidebar.hidden { display: none; }
         
         .qr-section { background: #111b21; padding: 15px; border-bottom: 1px solid #2a3942; text-align: center; }
@@ -33,8 +36,8 @@
         #qrcode img { display: block; }
         .my-id-display { font-size: 11px; color: var(--wa-green); margin-top: 8px; cursor: pointer; }
 
-        /* Chat Area */
-        .chat-area { flex: 1; display: flex; flex-direction: column; background: var(--wa-chat-bg); position: relative; width: 100%; }
+        /* Chat Area - Takes all available space */
+        .chat-area { flex: 1; display: flex; flex-direction: column; background: var(--wa-chat-bg); min-height: 0; overflow: hidden; }
         .chat-header { background: #202c33; padding: 10px 16px; display: flex; align-items: center; justify-content: space-between; flex-shrink: 0; }
         .chat-user-info { display: flex; flex-direction: column; }
         .chat-user-name { font-weight: bold; font-size: 16px; }
@@ -43,7 +46,7 @@
         .call-btn { background: none; border: none; color: var(--wa-gray); font-size: 22px; cursor: pointer; transition: 0.2s; }
         .call-btn:hover { color: var(--wa-green); }
 
-        .chat-bg { flex: 1; overflow-y: auto; padding: 15px; background-image: url('https://upload.wikimedia.org/wikipedia/commons/5/56/WhatsApp_chat_background_image.jpg'); background-size: cover; opacity: 0.9; display: flex; flex-direction: column; gap: 5px; }
+        .chat-bg { flex: 1; overflow-y: auto; padding: 15px; background-image: url('https://upload.wikimedia.org/wikipedia/commons/5/56/WhatsApp_chat_background_image.jpg'); background-size: cover; opacity: 0.9; display: flex; flex-direction: column; gap: 5px; min-height: 0; }
         .chat-bg::-webkit-scrollbar { width: 6px; }
         .chat-bg::-webkit-scrollbar-thumb { background: #374045; border-radius: 10px; }
 
@@ -54,22 +57,31 @@
         .msg-time { font-size: 11px; color: rgba(255,255,255,0.5); text-align: right; margin-top: 4px; }
         .file-link { color: #fff; text-decoration: underline; display: inline-block; margin-top: 5px; background: rgba(0,0,0,0.2); padding: 3px 8px; border-radius: 4px; }
 
-        /* Input Area */
+        /* Input Area - Stick to bottom */
         .input-area { background: #202c33; padding: 8px 16px; display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
-        .input-area input { flex: 1; background: var(--wa-input-bg); border: none; padding: 10px 15px; border-radius: 8px; color: white; outline: none; font-size: 14px; }
-        .attach-btn { background: none; border: none; color: var(--wa-gray); font-size: 24px; cursor: pointer; transition: 0.2s; }
+        .input-area input[type="text"] { flex: 1; background: var(--wa-input-bg); border: none; padding: 10px 15px; border-radius: 8px; color: white; outline: none; font-size: 14px; }
+        .attach-btn { background: none; border: none; color: var(--wa-gray); font-size: 24px; cursor: pointer; transition: 0.2s; flex-shrink: 0; }
         .attach-btn:hover { color: var(--wa-text); }
-        .send-btn { background: var(--wa-green); border: none; color: white; width: 40px; height: 40px; border-radius: 50%; cursor: pointer; font-size: 18px; display: flex; align-items: center; justify-content: center; }
+        .send-btn { background: var(--wa-green); border: none; color: white; width: 40px; height: 40px; border-radius: 50%; cursor: pointer; font-size: 18px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
 
-        /* Call Screen (FULL SCREEN OVERLAY) */
-        .call-screen { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: var(--wa-dark); z-index: 100; display: none; flex-direction: column; align-items: center; justify-content: space-between; padding: 50px 20px; }
+        /* FULL SCREEN Incoming Call Popup */
+        .incoming-call-popup { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(17, 27, 33, 0.98); z-index: 9999; display: none; flex-direction: column; align-items: center; justify-content: center; text-align: center; }
+        .incoming-call-popup.active { display: flex; }
+        .inc-avatar { width: 100px; height: 100px; background: var(--wa-input-bg); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 50px; margin-bottom: 20px; animation: pulse 1.5s infinite; }
+        .incoming-btns { display: flex; gap: 60px; margin-top: 40px; justify-content: center; }
+        .inc-btn { width: 60px; height: 60px; border-radius: 50%; border: none; color: white; font-size: 24px; cursor: pointer; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 15px rgba(0,0,0,0.3); }
+        .inc-btn.accept { background: var(--wa-green); }
+        .inc-btn.reject { background: var(--wa-danger); }
+
+        /* FULL SCREEN Call Screen Overlay */
+        .call-screen { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: var(--wa-dark); z-index: 9998; display: none; flex-direction: column; align-items: center; justify-content: space-between; padding: 50px 20px; }
         .call-screen.active { display: flex; }
         .call-top { text-align: center; }
         .call-avatar { width: 100px; height: 100px; background: var(--wa-input-bg); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 40px; margin: 0 auto 15px; }
         .call-name { font-size: 24px; font-weight: bold; }
         .call-status-text { color: var(--wa-gray); margin-top: 5px; }
         
-        .call-videos { width: 100%; flex: 1; position: relative; border-radius: 15px; overflow: hidden; margin: 20px 0; background: #000; display: none; }
+        .call-videos { width: 100%; flex: 1; position: relative; border-radius: 15px; overflow: hidden; margin: 20px 0; background: #000; display: none; min-height: 0; }
         .call-videos.active { display: block; }
         .call-videos video { width: 100%; height: 100%; object-fit: cover; position: absolute; top: 0; left: 0; }
         #localVideo { z-index: 2; transform: scaleX(-1); width: 35% !important; height: auto !important; top: 15px; right: 15px; left: auto; border-radius: 10px; border: 2px solid var(--wa-green); }
@@ -86,17 +98,7 @@
         .ptt-btn { width: 100%; padding: 15px; background: var(--wa-input-bg); border: 2px solid var(--wa-green); color: var(--wa-green); border-radius: 30px; font-weight: bold; font-size: 14px; cursor: pointer; user-select: none; text-align: center; display: none; }
         .ptt-btn:active { background: var(--wa-green); color: white; }
 
-        /* Incoming Call Popup */
-        .incoming-call-popup { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(17, 27, 33, 0.95); z-index: 150; display: none; flex-direction: column; align-items: center; justify-content: center; text-align: center; box-shadow: 0 0 30px rgba(0,0,0,0.5); }
-        .incoming-call-popup.active { display: flex; }
-        .inc-avatar { width: 100px; height: 100px; background: var(--wa-input-bg); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 50px; margin-bottom: 20px; }
-        .incoming-btns { display: flex; gap: 60px; margin-top: 40px; justify-content: center; }
-        .inc-btn { width: 60px; height: 60px; border-radius: 50%; border: none; color: white; font-size: 24px; cursor: pointer; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 15px rgba(0,0,0,0.3); }
-        .inc-btn.accept { background: var(--wa-green); }
-        .inc-btn.reject { background: var(--wa-danger); }
-
         @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.1); } 100% { transform: scale(1); } }
-        .pulse-anim { animation: pulse 1.5s infinite; }
 
         /* Hide file input */
         #fileInput { display: none; }
@@ -153,9 +155,9 @@
         </div>
     </div>
 
-    <!-- Incoming Call Popup (Full Screen) -->
+    <!-- Incoming Call Popup (Full Screen Overlay) -->
     <div class="incoming-call-popup" id="incomingCallPopup">
-        <div class="inc-avatar pulse-anim">👤</div>
+        <div class="inc-avatar">👤</div>
         <div style="font-size: 24px; font-weight: bold;" id="callerName">Unknown</div>
         <div style="color: var(--wa-gray); margin-top: 10px; font-size: 16px;">Incoming Call...</div>
         <div class="incoming-btns">
@@ -207,38 +209,75 @@
 
     // --- AUDIO RINGTONE GENERATOR ---
     const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-    let ringToneInterval = null;
+    let callerToneInterval = null; // Tone for the person who is calling
+    let receiverToneInterval = null; // Tone for the person receiving the call
 
-    function playRingTone() {
-        stopRingTone(); // Clear any existing
-        let isOn = false;
-        ringToneInterval = setInterval(() => {
-            if (isOn) return;
-            isOn = true;
+    // Caller hears this (Beep... Beep... Beep)
+    function playDialTone() {
+        stopAllTones();
+        let isPlaying = false;
+        callerToneInterval = setInterval(() => {
+            if (isPlaying) return;
+            isPlaying = true;
             
-            const oscillator = audioCtx.createOscillator();
-            const gainNode = audioCtx.createGain();
-            oscillator.connect(gainNode);
-            gainNode.connect(audioCtx.destination);
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
             
-            oscillator.type = 'sine';
-            oscillator.frequency.setValueAtTime(440, audioCtx.currentTime); // Frequency
+            osc.type = 'sine';
+            osc.frequency.setValueAtTime(440, audioCtx.currentTime);
             
-            gainNode.gain.setValueAtTime(0.5, audioCtx.currentTime);
-            gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 1.5);
+            gain.gain.setValueAtTime(0.4, audioCtx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 1);
             
-            oscillator.start(audioCtx.currentTime);
-            oscillator.stop(audioCtx.currentTime + 1.5);
+            osc.start(audioCtx.currentTime);
+            osc.stop(audioCtx.currentTime + 1);
 
-            setTimeout(() => { isOn = false; }, 2000);
+            setTimeout(() => { isPlaying = false; }, 2000); // Wait 2 seconds between beeps
         }, 2500);
     }
 
-    function stopRingTone() {
-        if (ringToneInterval) {
-            clearInterval(ringToneInterval);
-            ringToneInterval = null;
-        }
+    // Receiver hears this (Ring Ring... Ring Ring)
+    function playIncomingRing() {
+        stopAllTones();
+        let isPlaying = false;
+        receiverToneInterval = setInterval(() => {
+            if (isPlaying) return;
+            isPlaying = true;
+
+            const playDoubleBeep = (startTime) => {
+                const osc1 = audioCtx.createOscillator();
+                const osc2 = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                
+                osc1.connect(gain); osc2.connect(gain); gain.connect(audioCtx.destination);
+                
+                osc1.type = 'sine'; osc2.type = 'sine';
+                osc1.frequency.setValueAtTime(480, startTime);
+                osc2.frequency.setValueAtTime(440, startTime);
+                
+                gain.gain.setValueAtTime(0.4, startTime);
+                gain.gain.exponentialRampToValueAtTime(0.01, startTime + 0.8);
+                
+                osc1.start(startTime); osc1.stop(startTime + 0.8);
+                osc2.start(startTime); osc2.stop(startTime + 0.8);
+            };
+
+            // Double Ring Effect
+            playDoubleBeep(audioCtx.currentTime);
+            playDoubleBeep(audioCtx.currentTime + 1.0);
+
+            // Wait 4 seconds before repeating
+            setTimeout(() => { isPlaying = false; }, 4000);
+        }, 5000);
+    }
+
+    function stopAllTones() {
+        if (callerToneInterval) clearInterval(callerToneInterval);
+        if (receiverToneInterval) clearInterval(receiverToneInterval);
+        callerToneInterval = null;
+        receiverToneInterval = null;
     }
 
     // --- INIT NETWORK ---
@@ -277,13 +316,13 @@
             callType = call.metadata.type || 'video';
             document.getElementById('callerName').innerText = call.peer;
             document.getElementById('incomingCallPopup').classList.add('active');
-            playRingTone(); // Play ringtone on incoming call
+            playIncomingRing(); // Play incoming ringtone for receiver
         });
 
         peer.on('error', err => {
             appendMsg("System", "Error: " + err.type);
             if(err.type === 'unavailable-id') alert("Codename taken! Try another.");
-            stopRingTone();
+            stopAllTones();
         });
     }
 
@@ -349,7 +388,7 @@
         const file = inputElement.files[0];
         if (!file) return;
 
-        if (file.size > 5 * 1024 * 1024) { // Limit 5MB for P2P stability
+        if (file.size > 5 * 1024 * 1024) {
             return appendMsg("System", "File too large! Max 5MB.");
         }
 
@@ -374,7 +413,7 @@
             }
         };
         reader.readAsArrayBuffer(file);
-        inputElement.value = ''; // reset input
+        inputElement.value = ''; 
     }
 
     function appendMsg(user, text) {
@@ -412,17 +451,17 @@
             const call = peer.call(conn.peer, localStream, { metadata: { type: type } });
             setupCall(call);
             showCallScreen(conn.peer, type);
-            playRingTone(); // Play ringtone while calling
+            playDialTone(); // Caller hears dial tone
         } catch (err) {
             appendMsg("System", "Camera/Mic permission denied!");
-            stopRingTone();
+            stopAllTones();
         }
     }
 
     async function answerCall() {
         if (!pendingCall) return;
         document.getElementById('incomingCallPopup').classList.remove('active');
-        stopRingTone(); // Stop ringtone when answered
+        stopAllTones(); // Stop ringing when answered
         
         isMicOn = true;
         isCamOn = (pendingCall.metadata.type === 'video');
@@ -448,7 +487,7 @@
         if(pendingCall) pendingCall.close();
         pendingCall = null;
         document.getElementById('incomingCallPopup').classList.remove('active');
-        stopRingTone();
+        stopAllTones();
     }
 
     function setupCall(call) {
@@ -458,7 +497,7 @@
         call.on('stream', rStream => {
             remoteVideo.srcObject = rStream;
             document.getElementById('callStatusText').innerText = "Connected";
-            stopRingTone(); // Stop ringtone when connection is established
+            stopAllTones(); // Stop dial tone when connection establishes
         });
         
         call.on('close', hangUp);
@@ -496,7 +535,7 @@
         callVideos.classList.remove('active');
         callScreen.classList.remove('active');
         document.getElementById('incomingCallPopup').classList.remove('active');
-        stopRingTone();
+        stopAllTones();
         appendMsg("System", "Call ended.");
     }
 
@@ -543,6 +582,7 @@
 
     pttBtn.addEventListener('mouseup', stopPtt);
     pttBtn.addEventListener('mouseleave', stopPtt);
+    pttBtn.addEventListener('touchend', stopPtt); // Added for mobile
 
     // Resume audio context on first click (Browser autoplay policy)
     document.addEventListener('click', () => {
