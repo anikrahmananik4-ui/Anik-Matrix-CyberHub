@@ -39,13 +39,14 @@
         .btn-hangup { background: var(--danger); color: white; }
         .btn-hangup:hover:not(:disabled) { box-shadow: 0 0 15px var(--danger); }
         .btn-link { background: var(--success); color: black; }
+        .btn-accept { background: var(--success); color: black; animation: pulse 1s infinite; }
+        
+        @keyframes pulse { 0% { box-shadow: 0 0 0 0 rgba(0, 255, 102, 0.7); } 70% { box-shadow: 0 0 0 10px rgba(0, 255, 102, 0); } 100% { box-shadow: 0 0 0 0 rgba(0, 255, 102, 0); } }
 
-        /* Setup Screen */
         #setupScreen { display: block; }
         #hubScreen { display: none; }
         #codenameInput { font-size: 14px; text-align: center; letter-spacing: 2px; text-transform: lowercase; }
 
-        /* QR & ID Section */
         #profileSection { margin-bottom: 15px; padding: 10px; border: 1px solid #333; border-radius: 10px; background: rgba(0,0,0,0.2); }
         #myName { font-size: 14px; color: var(--success); margin-bottom: 10px; cursor: pointer; text-shadow: 0 0 5px var(--success); }
         #qrcode { display: inline-block; padding: 8px; background: white; border-radius: 8px; box-shadow: 0 0 15px rgba(0, 242, 255, 0.3); }
@@ -60,7 +61,6 @@
 
 <canvas id="bg"></canvas>
 
-<!-- STEP 1: Choose Codename -->
 <div class="hub-container" id="setupScreen">
     <div class="header">ANIK-MATRIX CYBER-HUB</div>
     <div style="font-size: 30px; margin-bottom: 20px;">👤</div>
@@ -69,7 +69,6 @@
     <div style="font-size: 9px; color: #666; margin-top: 15px;">NO LONG IDS. JUST SHARE YOUR CODENAME.</div>
 </div>
 
-<!-- STEP 2: Main Hub -->
 <div class="hub-container" id="hubScreen">
     <div class="header">ANIK-MATRIX CYBER-HUB</div>
 
@@ -82,6 +81,12 @@
         <div id="myName" title="Click to copy">CODENAME: ...</div>
         <div id="qrcode"></div>
         <div style="font-size: 9px; color: #888; margin-top: 8px;">SCAN OR TYPE CODENAME TO LINK</div>
+    </div>
+
+    <!-- Incoming Call Popup (Hidden by default) -->
+    <div id="incomingCallPopup" style="display:none; margin-bottom: 10px; padding: 15px; border: 2px solid var(--success); background: rgba(0,255,102,0.1); border-radius: 10px;">
+        <div style="margin-bottom: 10px; color: var(--success); font-size: 12px;">INCOMING CALL...</div>
+        <button class="btn-accept" style="width: 100%; padding: 12px;" onclick="answerCall()">ACCEPT CALL</button>
     </div>
 
     <input type="text" id="peerId" placeholder="FRIEND'S CODENAME">
@@ -123,9 +128,9 @@
     let peer;
     let conn = null;         
     let activeCall = null;   
-    let localStream = null;  
-    let myCodeName = "";
-
+    let localStream = null;
+    let pendingCall = null;  // For incoming calls waiting to be answered
+    
     const status = document.getElementById('status');
     const localVideo = document.getElementById('localVideo');
     const remoteVideo = document.getElementById('remoteVideo');
@@ -134,7 +139,7 @@
     const pttBtn = document.getElementById('pttBtn');
     const peerIdInput = document.getElementById('peerId');
 
-    // --- STEP 1: INIT NETWORK WITH CODENAME ---
+    // --- STEP 1: INIT NETWORK ---
     function initNetwork() {
         myCodeName = document.getElementById('codenameInput').value.trim().toLowerCase().replace(/\s+/g, '');
         if (!myCodeName) return alert("Please enter a codename!");
@@ -142,21 +147,18 @@
         document.getElementById('setupScreen').style.display = 'none';
         document.getElementById('hubScreen').style.display = 'block';
 
-        // Create Peer with custom ID (Codename)
         peer = new Peer(myCodeName);
 
         peer.on('open', id => {
             document.getElementById('myName').innerText = "CODENAME: " + id;
             status.innerText = "ONLINE - AWAITING LINK";
             
-            // Generate QR Code
             const currentUrl = window.location.href.split('?')[0];
             const shareUrl = currentUrl + "?id=" + id;
             const qrcodeContainer = document.getElementById('qrcode');
             qrcodeContainer.innerHTML = ""; 
             new QRCode(qrcodeContainer, { text: shareUrl, width: 100, height: 100, colorDark : "#000000", colorLight : "#ffffff", correctLevel : QRCode.CorrectLevel.H });
 
-            // Auto-connect from URL
             const urlParams = new URLSearchParams(window.location.search);
             const targetId = urlParams.get('id');
             if (targetId && targetId !== id) {
@@ -172,11 +174,11 @@
             setupChat();
         });
 
-        peer.on('call', async call => {
-            appendMsg("System", "Incoming connection...");
-            const stream = await getLocalStream(call.metadata.type === 'video');
-            call.answer(stream);
-            setupCall(call);
+        // Handle Incoming Call (Don't auto-answer to fix browser permissions)
+        peer.on('call', call => {
+            pendingCall = call;
+            document.getElementById('incomingCallPopup').style.display = 'block';
+            appendMsg("System", "Incoming call from " + call.peer);
         });
 
         peer.on('error', err => {
@@ -186,33 +188,94 @@
         });
     }
 
-    // Copy Codename
+    // Answer Incoming Call
+    async function answerCall() {
+        if (!pendingCall) return;
+        document.getElementById('incomingCallPopup').style.display = 'none';
+        
+        // Get media on button click (Fixes Audio/Video permissions)
+        localStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+        localVideo.srcObject = localStream;
+        localVideo.classList.add('active-call');
+        
+        pendingCall.answer(localStream);
+        setupCall(pendingCall);
+        pendingCall = null;
+    }
+
     document.getElementById('myName').addEventListener('click', function() {
         navigator.clipboard.writeText(peer.id);
         appendMsg("System", "Codename Copied!");
     });
 
-    // --- MEDIA HELPERS ---
-    async function getLocalStream(videoEnabled) {
-        if (localStream) {
-            localStream.getVideoTracks().forEach(track => track.enabled = videoEnabled);
-            localStream.getAudioTracks().forEach(track => track.enabled = false); 
-            return localStream;
-        }
+    // --- OUTGOING CALL LOGIC ---
+    async function initiateVideoCall() {
+        const friendId = peerIdInput.value.trim().toLowerCase();
+        if (!friendId) return appendMsg("System", "Enter Friend's Codename!");
+        if (activeCall) return appendMsg("System", "Already in a call!");
+
+        // Get media on button click (Fixes Audio/Video permissions)
         localStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
         localVideo.srcObject = localStream;
         localVideo.classList.add('active-call');
-        localStream.getVideoTracks().forEach(track => track.enabled = videoEnabled);
-        localStream.getAudioTracks().forEach(track => track.enabled = false); 
-        return localStream;
+
+        const call = peer.call(friendId, localStream);
+        setupCall(call);
     }
 
-    function stopLocalStream() {
+    function setupCall(call) {
+        activeCall = call;
+        callBtn.disabled = true; 
+        hangBtn.disabled = false;
+
+        call.on('stream', rStream => {
+            remoteVideo.srcObject = rStream; 
+            remoteVideo.classList.add('active-call'); 
+            status.innerText = "CONNECTED (UNMUTED)";
+        });
+        
+        call.on('close', hangUp);
+        call.on('error', hangUp);
+    }
+
+    function hangUp() {
+        if (activeCall) activeCall.close();
+        activeCall = null; 
+        
+        // Stop all tracks (Camera & Mic light off)
         if (localStream) {
             localStream.getTracks().forEach(track => track.stop());
-            localStream = null; localVideo.srcObject = null; localVideo.classList.remove('active-call');
+            localStream = null; 
+            localVideo.srcObject = null; 
+            localVideo.classList.remove('active-call');
         }
+        
+        remoteVideo.srcObject = null; 
+        remoteVideo.classList.remove('active-call');
+        callBtn.disabled = false; 
+        hangBtn.disabled = true;
+        status.innerText = "DISCONNECTED"; 
+        appendMsg("System", "Call Ended.");
     }
+
+    // --- WALKIE TALKIE LOGIC (Mute/Unmute) ---
+    pttBtn.addEventListener('mousedown', () => {
+        if (!localStream || !activeCall) return appendMsg("System", "Must be in a call first!");
+        localStream.getAudioTracks().forEach(track => track.enabled = true);
+        pttBtn.classList.add('transmitting'); 
+        status.innerText = "🎤 TRANSMITTING...";
+    });
+
+    const stopTransmitting = () => {
+        if (localStream) {
+            localStream.getAudioTracks().forEach(track => track.enabled = false);
+        }
+        pttBtn.classList.remove('transmitting');
+        if (activeCall) status.innerText = "CONNECTED (MUTED)";
+    };
+
+    pttBtn.addEventListener('mouseup', stopTransmitting);
+    pttBtn.addEventListener('mouseleave', stopTransmitting); 
 
     // --- CHAT LOGIC ---
     function connectChat() {
@@ -255,53 +318,6 @@
         document.getElementById('chatBox').appendChild(div);
         document.getElementById('chatBox').scrollTop = document.getElementById('chatBox').scrollHeight;
     }
-
-    // --- VIDEO CALL LOGIC ---
-    async function initiateVideoCall() {
-        const friendId = peerIdInput.value.trim().toLowerCase();
-        if (!friendId) return appendMsg("System", "Enter Friend's Codename!");
-        if (activeCall) return appendMsg("System", "Already in a call!");
-
-        const stream = await getLocalStream(true); 
-        const call = peer.call(friendId, stream, { metadata: { type: 'video' } });
-        setupCall(call);
-    }
-
-    function setupCall(call) {
-        activeCall = call;
-        callBtn.disabled = true; hangBtn.disabled = false;
-
-        call.on('stream', rStream => {
-            remoteVideo.srcObject = rStream; remoteVideo.classList.add('active-call'); status.innerText = "CONNECTED";
-        });
-        
-        call.on('close', hangUp);
-        call.on('error', hangUp);
-    }
-
-    function hangUp() {
-        if (activeCall) activeCall.close();
-        activeCall = null; stopLocalStream();
-        remoteVideo.srcObject = null; remoteVideo.classList.remove('active-call');
-        callBtn.disabled = false; hangBtn.disabled = true;
-        status.innerText = "DISCONNECTED"; appendMsg("System", "Call Ended.");
-    }
-
-    // --- WALKIE TALKIE LOGIC ---
-    pttBtn.addEventListener('mousedown', () => {
-        if (!localStream || !activeCall) return appendMsg("System", "Must be in a call first!");
-        localStream.getAudioTracks().forEach(track => track.enabled = true);
-        pttBtn.classList.add('transmitting'); status.innerText = "🎤 TRANSMITTING...";
-    });
-
-    const stopTransmitting = () => {
-        if (localStream) localStream.getAudioTracks().forEach(track => track.enabled = false);
-        pttBtn.classList.remove('transmitting');
-        if (activeCall) status.innerText = "CONNECTED (MUTED)";
-    };
-
-    pttBtn.addEventListener('mouseup', stopTransmitting);
-    pttBtn.addEventListener('mouseleave', stopTransmitting); 
 
 </script>
 </body>
