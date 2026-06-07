@@ -9,7 +9,7 @@
     <style>
         :root { --wa-green: #00a884; --wa-dark: #111b21; --wa-chat-bg: #0b141a; --wa-input-bg: #2a3942; --wa-bubble-me: #005c4b; --wa-bubble-friend: #202c33; --wa-text: #e9edef; --wa-gray: #8696a0; --wa-danger: #ea4335; }
         * { box-sizing: border-box; margin: 0; padding: 0; }
-        
+
         /* Dynamic VH for mobile keyboard issue */
         html, body { height: 100%; height: 100dvh; overflow: hidden; }
         body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: var(--wa-dark); color: var(--wa-text); display: flex; flex-direction: column; }
@@ -24,11 +24,11 @@
 
         /* Main Container - Fixed Flex Structure */
         .main-container { display: flex; flex-direction: column; flex: 1; min-height: 0; overflow: hidden; position: relative; }
-        
+
         /* Sidebar */
         .sidebar { background: var(--wa-dark); display: flex; flex-direction: column; flex-shrink: 0; z-index: 5; }
         .sidebar.hidden { display: none; }
-        
+
         .qr-section { background: #111b21; padding: 15px; border-bottom: 1px solid #2a3942; text-align: center; }
         .qr-section input { width: 100%; background: var(--wa-input-bg); border: none; padding: 10px; border-radius: 8px; color: white; outline: none; margin-bottom: 10px; text-align: center; }
         .qr-section button { width: 100%; background: var(--wa-green); color: white; border: none; padding: 10px; border-radius: 8px; font-weight: bold; cursor: pointer; }
@@ -36,12 +36,12 @@
         #qrcode img { display: block; }
         .my-id-display { font-size: 11px; color: var(--wa-green); margin-top: 8px; cursor: pointer; }
 
-        /* Chat Area - Takes all available space */
+        /* Chat Area */
         .chat-area { flex: 1; display: flex; flex-direction: column; background: var(--wa-chat-bg); min-height: 0; overflow: hidden; }
         .chat-header { background: #202c33; padding: 10px 16px; display: flex; align-items: center; justify-content: space-between; flex-shrink: 0; }
         .chat-user-info { display: flex; flex-direction: column; }
         .chat-user-name { font-weight: bold; font-size: 16px; }
-        .chat-user-status { font-size: 12px; color: var(--wa-gray); }
+        .chat-user-status { font-size: 12px; color: var(--wa-gray); transition: 0.3s; }
         .call-btns { display: flex; gap: 15px; }
         .call-btn { background: none; border: none; color: var(--wa-gray); font-size: 22px; cursor: pointer; transition: 0.2s; }
         .call-btn:hover { color: var(--wa-green); }
@@ -54,17 +54,31 @@
         .msg.me { background: var(--wa-bubble-me); align-self: flex-end; border-top-right-radius: 0; }
         .msg.friend { background: var(--wa-bubble-friend); align-self: flex-start; border-top-left-radius: 0; }
         .msg.system { background: transparent; color: var(--wa-gray); align-self: center; font-size: 12px; padding: 5px; border-radius: 5px; text-align: center; max-width: 90%; }
-        .msg-time { font-size: 11px; color: rgba(255,255,255,0.5); text-align: right; margin-top: 4px; }
+        .msg-time { font-size: 11px; color: rgba(255,255,255,0.5); text-align: right; margin-top: 4px; display: flex; align-items: center; justify-content: flex-end; gap: 4px; }
+        
+        /* Read Receipts */
+        .read-receipt { font-size: 14px; line-height: 1; }
+        .read-receipt.sent { color: rgba(255,255,255,0.4); } /* Grey Double Tick */
+        .read-receipt.read { color: #53bdeb; } /* Blue Double Tick */
+        
         .file-link { color: #fff; text-decoration: underline; display: inline-block; margin-top: 5px; background: rgba(0,0,0,0.2); padding: 3px 8px; border-radius: 4px; }
 
-        /* Input Area - Stick to bottom */
+        /* Typing Indicator */
+        .typing-indicator { display: none; align-self: flex-start; background: var(--wa-bubble-friend); padding: 10px 15px; border-radius: 8px; border-top-left-radius: 0; }
+        .typing-indicator.active { display: flex; align-items: center; gap: 4px; }
+        .typing-dot { width: 6px; height: 6px; background: var(--wa-gray); border-radius: 50%; animation: typingAnim 1.4s infinite; }
+        .typing-dot:nth-child(2) { animation-delay: 0.2s; }
+        .typing-dot:nth-child(3) { animation-delay: 0.4s; }
+        @keyframes typingAnim { 0%, 60%, 100% { transform: translateY(0); } 30% { transform: translateY(-5px); } }
+
+        /* Input Area */
         .input-area { background: #202c33; padding: 8px 16px; display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
         .input-area input[type="text"] { flex: 1; background: var(--wa-input-bg); border: none; padding: 10px 15px; border-radius: 8px; color: white; outline: none; font-size: 14px; }
         .attach-btn { background: none; border: none; color: var(--wa-gray); font-size: 24px; cursor: pointer; transition: 0.2s; flex-shrink: 0; }
         .attach-btn:hover { color: var(--wa-text); }
         .send-btn { background: var(--wa-green); border: none; color: white; width: 40px; height: 40px; border-radius: 50%; cursor: pointer; font-size: 18px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
 
-        /* FULL SCREEN Incoming Call Popup */
+        /* Incoming Call Popup */
         .incoming-call-popup { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(17, 27, 33, 0.98); z-index: 9999; display: none; flex-direction: column; align-items: center; justify-content: center; text-align: center; }
         .incoming-call-popup.active { display: flex; }
         .inc-avatar { width: 100px; height: 100px; background: var(--wa-input-bg); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 50px; margin-bottom: 20px; animation: pulse 1.5s infinite; }
@@ -73,14 +87,14 @@
         .inc-btn.accept { background: var(--wa-green); }
         .inc-btn.reject { background: var(--wa-danger); }
 
-        /* FULL SCREEN Call Screen Overlay */
+        /* Call Screen Overlay */
         .call-screen { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: var(--wa-dark); z-index: 9998; display: none; flex-direction: column; align-items: center; justify-content: space-between; padding: 50px 20px; }
         .call-screen.active { display: flex; }
         .call-top { text-align: center; }
         .call-avatar { width: 100px; height: 100px; background: var(--wa-input-bg); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 40px; margin: 0 auto 15px; }
         .call-name { font-size: 24px; font-weight: bold; }
         .call-status-text { color: var(--wa-gray); margin-top: 5px; }
-        
+
         .call-videos { width: 100%; flex: 1; position: relative; border-radius: 15px; overflow: hidden; margin: 20px 0; background: #000; display: none; min-height: 0; }
         .call-videos.active { display: block; }
         .call-videos video { width: 100%; height: 100%; object-fit: cover; position: absolute; top: 0; left: 0; }
@@ -94,19 +108,17 @@
         .ctrl-btn.speaker { background: var(--wa-input-bg); }
         .ctrl-btn.hangup { background: var(--wa-danger); width: 60px; height: 60px; font-size: 24px; }
         .ctrl-btn.active { background: white; color: var(--wa-dark); }
-        
+
         .ptt-btn { width: 100%; padding: 15px; background: var(--wa-input-bg); border: 2px solid var(--wa-green); color: var(--wa-green); border-radius: 30px; font-weight: bold; font-size: 14px; cursor: pointer; user-select: none; text-align: center; display: none; }
         .ptt-btn:active { background: var(--wa-green); color: white; }
 
         @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.1); } 100% { transform: scale(1); } }
 
-        /* Hide file input */
         #fileInput { display: none; }
     </style>
 </head>
 <body>
 
-    <!-- Header -->
     <div class="header">
         <div class="header-title"><span>⚡</span> WA P2P Hub</div>
         <div class="header-actions">
@@ -114,10 +126,7 @@
         </div>
     </div>
 
-    <!-- Main Container -->
     <div class="main-container">
-        
-        <!-- Sidebar (Link & QR) -->
         <div class="sidebar" id="sidebar">
             <div class="qr-section">
                 <input type="text" id="codenameInput" placeholder="Enter your Codename" maxlength="15">
@@ -131,7 +140,6 @@
             </div>
         </div>
 
-        <!-- Chat Area -->
         <div class="chat-area">
             <div class="chat-header">
                 <div class="chat-user-info">
@@ -144,18 +152,24 @@
                 </div>
             </div>
 
-            <div class="chat-bg" id="chatBox"></div>
+            <div class="chat-bg" id="chatBox">
+                <!-- Typing Indicator -->
+                <div class="typing-indicator" id="typingIndicator">
+                    <div class="typing-dot"></div>
+                    <div class="typing-dot"></div>
+                    <div class="typing-dot"></div>
+                </div>
+            </div>
 
             <div class="input-area">
                 <button class="attach-btn" onclick="document.getElementById('fileInput').click()">📎</button>
                 <input type="file" id="fileInput" onchange="sendFile(this)">
-                <input type="text" id="chatInput" placeholder="Type a message" onkeypress="if(event.key==='Enter') sendMessage()">
+                <input type="text" id="chatInput" placeholder="Type a message" oninput="handleTyping()" onkeypress="if(event.key==='Enter') sendMessage()">
                 <button class="send-btn" onclick="sendMessage()">➤</button>
             </div>
         </div>
     </div>
 
-    <!-- Incoming Call Popup (Full Screen Overlay) -->
     <div class="incoming-call-popup" id="incomingCallPopup">
         <div class="inc-avatar">👤</div>
         <div style="font-size: 24px; font-weight: bold;" id="callerName">Unknown</div>
@@ -166,24 +180,21 @@
         </div>
     </div>
 
-    <!-- Call Screen Overlay (Full Screen) -->
     <div class="call-screen" id="callScreen">
         <div class="call-top">
             <div class="call-avatar">👤</div>
             <div class="call-name" id="callNameDisplay">Friend</div>
             <div class="call-status-text" id="callStatusText">Calling...</div>
         </div>
-
         <div class="call-videos" id="callVideos">
             <video id="remoteVideo" autoplay playsinline></video>
             <video id="localVideo" autoplay muted playsinline></video>
         </div>
-
         <div class="call-bottom">
             <div class="call-controls">
                 <button class="ctrl-btn mic" id="micBtn" onclick="toggleMic()">🎤</button>
                 <button class="ctrl-btn cam" id="camBtn" onclick="toggleCam()">📷</button>
-                <button class="ctrl-btn hangup" onclick="hangUp()">📵</button>
+                <button class="ctrl-btn hangup" onclick="hangUp(true)">📵</button>
                 <button class="ctrl-btn speaker" id="speakerBtn">🔊</button>
             </div>
             <button class="ptt-btn" id="pttBtn">HOLD TO TALK (WALKIE TALKIE)</button>
@@ -191,7 +202,6 @@
     </div>
 
 <script>
-    // --- PEER & STATE LOGIC ---
     let peer;
     let conn = null;         
     let activeCall = null;   
@@ -201,7 +211,13 @@
     let isCamOn = true;
     let callType = 'video'; 
 
+    // State for Typing & Read Receipts
+    let lastSentMsgId = null;
+    let typingTimeout = null;
+    let isTyping = false;
+
     const chatBox = document.getElementById('chatBox');
+    const typingIndicator = document.getElementById('typingIndicator');
     const localVideo = document.getElementById('localVideo');
     const remoteVideo = document.getElementById('remoteVideo');
     const callScreen = document.getElementById('callScreen');
@@ -209,66 +225,47 @@
 
     // --- AUDIO RINGTONE GENERATOR ---
     const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-    let callerToneInterval = null; // Tone for the person who is calling
-    let receiverToneInterval = null; // Tone for the person receiving the call
+    let callerToneInterval = null; 
+    let receiverToneInterval = null; 
 
-    // Caller hears this (Beep... Beep... Beep)
     function playDialTone() {
         stopAllTones();
         let isPlaying = false;
         callerToneInterval = setInterval(() => {
             if (isPlaying) return;
             isPlaying = true;
-            
             const osc = audioCtx.createOscillator();
             const gain = audioCtx.createGain();
-            osc.connect(gain);
-            gain.connect(audioCtx.destination);
-            
-            osc.type = 'sine';
-            osc.frequency.setValueAtTime(440, audioCtx.currentTime);
-            
+            osc.connect(gain); gain.connect(audioCtx.destination);
+            osc.type = 'sine'; osc.frequency.setValueAtTime(440, audioCtx.currentTime);
             gain.gain.setValueAtTime(0.4, audioCtx.currentTime);
             gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 1);
-            
-            osc.start(audioCtx.currentTime);
-            osc.stop(audioCtx.currentTime + 1);
-
-            setTimeout(() => { isPlaying = false; }, 2000); // Wait 2 seconds between beeps
+            osc.start(audioCtx.currentTime); osc.stop(audioCtx.currentTime + 1);
+            setTimeout(() => { isPlaying = false; }, 2000);
         }, 2500);
     }
 
-    // Receiver hears this (Ring Ring... Ring Ring)
     function playIncomingRing() {
         stopAllTones();
         let isPlaying = false;
         receiverToneInterval = setInterval(() => {
             if (isPlaying) return;
             isPlaying = true;
-
             const playDoubleBeep = (startTime) => {
                 const osc1 = audioCtx.createOscillator();
                 const osc2 = audioCtx.createOscillator();
                 const gain = audioCtx.createGain();
-                
                 osc1.connect(gain); osc2.connect(gain); gain.connect(audioCtx.destination);
-                
                 osc1.type = 'sine'; osc2.type = 'sine';
                 osc1.frequency.setValueAtTime(480, startTime);
                 osc2.frequency.setValueAtTime(440, startTime);
-                
                 gain.gain.setValueAtTime(0.4, startTime);
                 gain.gain.exponentialRampToValueAtTime(0.01, startTime + 0.8);
-                
                 osc1.start(startTime); osc1.stop(startTime + 0.8);
                 osc2.start(startTime); osc2.stop(startTime + 0.8);
             };
-
-            // Double Ring Effect
             playDoubleBeep(audioCtx.currentTime);
             playDoubleBeep(audioCtx.currentTime + 1.0);
-
-            // Wait 4 seconds before repeating
             setTimeout(() => { isPlaying = false; }, 4000);
         }, 5000);
     }
@@ -276,8 +273,7 @@
     function stopAllTones() {
         if (callerToneInterval) clearInterval(callerToneInterval);
         if (receiverToneInterval) clearInterval(receiverToneInterval);
-        callerToneInterval = null;
-        receiverToneInterval = null;
+        callerToneInterval = null; receiverToneInterval = null;
     }
 
     // --- INIT NETWORK ---
@@ -290,7 +286,7 @@
         peer.on('open', id => {
             document.getElementById('myIdDisplay').innerText = "ID: " + id + " (Tap to copy)";
             appendMsg("System", "You are online as " + id);
-            
+
             const currentUrl = window.location.href.split('?')[0];
             const shareUrl = currentUrl + "?id=" + id;
             const qrcodeContainer = document.getElementById('qrcode');
@@ -316,7 +312,7 @@
             callType = call.metadata.type || 'video';
             document.getElementById('callerName').innerText = call.peer;
             document.getElementById('incomingCallPopup').classList.add('active');
-            playIncomingRing(); // Play incoming ringtone for receiver
+            playIncomingRing(); 
         });
 
         peer.on('error', err => {
@@ -353,20 +349,31 @@
             appendMsg("System", "Chat secured with " + conn.peer);
             document.getElementById('sidebar').classList.add('hidden'); 
         });
+        
         conn.on('data', data => {
             if (data.type === 'file') {
                 const blob = new Blob([data.file], { type: data.fileType });
                 const url = URL.createObjectURL(blob);
                 const isImage = data.fileType.startsWith('image/');
                 if (isImage) {
-                    appendMsg("Friend", `<img src="${url}" style="max-width:100%; border-radius:8px; margin-bottom:5px;"><br><a href="${url}" download="${data.fileName}" class="file-link">📥 ${data.fileName}</a>`);
+                    appendMsg("Friend", `<img src="${url}" style="max-width:100%; border-radius:8px; margin-bottom:5px;"><br><a href="${url}" download="${data.fileName}" class="file-link">📥 ${data.fileName}</a>`, null, true); // mark file messages as read immediately
                 } else {
-                    appendMsg("Friend", `📄 Document: <a href="${url}" download="${data.fileName}" class="file-link">📥 ${data.fileName}</a>`);
+                    appendMsg("Friend", `📄 Document: <a href="${url}" download="${data.fileName}" class="file-link">📥 ${data.fileName}</a>`, null, true);
                 }
-            } else {
-                appendMsg("Friend", data.text || data);
+                sendReadReceipt(data.msgId); // Send read receipt for files
+            } 
+            else if (data.type === 'text') {
+                appendMsg("Friend", data.text, data.msgId);
+                sendReadReceipt(data.msgId); // Send read receipt for text
+            } 
+            else if (data.type === 'read-receipt') {
+                markMsgAsRead(data.msgId); // Update UI for sent message
+            } 
+            else if (data.type === 'typing') {
+                showTypingIndicator(data.isTyping); // Show/hide typing dots
             }
         });
+
         conn.on('close', () => {
             document.getElementById('chatPartnerName').innerText = "Disconnected";
             document.getElementById('chatPartnerStatus').innerText = "Offline";
@@ -375,11 +382,65 @@
     }
 
     function sendMessage() {
-        const msg = document.getElementById('chatInput').value;
+        const msg = document.getElementById('chatInput').value.trim();
         if (conn && conn.open && msg) {
-            conn.send({ type: 'text', text: msg });
-            appendMsg("Me", msg);
+            const msgId = 'msg_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+            lastSentMsgId = msgId;
+            
+            conn.send({ type: 'text', text: msg, msgId: msgId });
+            appendMsg("Me", msg, msgId);
             document.getElementById('chatInput').value = "";
+            
+            // Stop typing indicator
+            isTyping = false;
+            conn.send({ type: 'typing', isTyping: false });
+        }
+    }
+
+    // --- TYPING INDICATOR LOGIC ---
+    function handleTyping() {
+        if (!conn || !conn.open) return;
+        
+        if (!isTyping) {
+            isTyping = true;
+            conn.send({ type: 'typing', isTyping: true });
+        }
+
+        clearTimeout(typingTimeout);
+        typingTimeout = setTimeout(() => {
+            isTyping = false;
+            conn.send({ type: 'typing', isTyping: false });
+        }, 2000); // Stop showing typing after 2 seconds of inactivity
+    }
+
+    function showTypingIndicator(show) {
+        if (show) {
+            typingIndicator.classList.add('active');
+            document.getElementById('chatPartnerStatus').innerText = "typing...";
+            document.getElementById('chatPartnerStatus').style.color = "var(--wa-green)";
+            chatBox.scrollTop = chatBox.scrollHeight;
+        } else {
+            typingIndicator.classList.remove('active');
+            document.getElementById('chatPartnerStatus').innerText = "Online";
+            document.getElementById('chatPartnerStatus').style.color = "var(--wa-gray)";
+        }
+    }
+
+    // --- READ RECEIPT LOGIC ---
+    function sendReadReceipt(msgId) {
+        if (conn && conn.open && msgId) {
+            conn.send({ type: 'read-receipt', msgId: msgId });
+        }
+    }
+
+    function markMsgAsRead(msgId) {
+        const msgElement = document.getElementById(msgId);
+        if (msgElement) {
+            const tick = msgElement.querySelector('.read-receipt');
+            if (tick) {
+                tick.classList.remove('sent');
+                tick.classList.add('read'); // Turn ticks blue
+            }
         }
     }
 
@@ -388,47 +449,57 @@
         const file = inputElement.files[0];
         if (!file) return;
 
-        if (file.size > 5 * 1024 * 1024) {
-            return appendMsg("System", "File too large! Max 5MB.");
-        }
+        if (file.size > 5 * 1024 * 1024) return appendMsg("System", "File too large! Max 5MB.");
 
         appendMsg("System", `Sending ${file.name}...`);
         const reader = new FileReader();
         reader.onload = function(e) {
             const fileData = e.target.result;
+            const msgId = 'file_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+            
             conn.send({
                 type: 'file',
                 file: fileData,
                 fileName: file.name,
-                fileType: file.type
+                fileType: file.type,
+                msgId: msgId
             });
 
             const blob = new Blob([fileData], { type: file.type });
             const url = URL.createObjectURL(blob);
             const isImage = file.type.startsWith('image/');
             if (isImage) {
-                appendMsg("Me", `<img src="${url}" style="max-width:100%; border-radius:8px; margin-bottom:5px;"><br><a href="${url}" download="${file.name}" class="file-link">📥 ${file.name}</a>`);
+                appendMsg("Me", `<img src="${url}" style="max-width:100%; border-radius:8px; margin-bottom:5px;"><br><a href="${url}" download="${file.name}" class="file-link">📥 ${file.name}</a>`, msgId);
             } else {
-                appendMsg("Me", `📄 Document: <a href="${url}" download="${file.name}" class="file-link">📥 ${file.name}</a>`);
+                appendMsg("Me", `📄 Document: <a href="${url}" download="${file.name}" class="file-link">📥 ${file.name}</a>`, msgId);
             }
         };
         reader.readAsArrayBuffer(file);
         inputElement.value = ''; 
     }
 
-    function appendMsg(user, text) {
+    function appendMsg(user, text, msgId, isFriendReadInstant = false) {
         const div = document.createElement('div');
         const time = new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
-        
+
         if (user === "System") {
             div.className = "msg system";
             div.innerHTML = text;
         } else {
             div.className = `msg ${user === "Me" ? "me" : "friend"}`;
-            div.innerHTML = `${text}<div class="msg-time">${time}</div>`;
+            if(msgId) div.id = msgId;
+
+            let receiptHtml = '';
+            if (user === "Me") {
+                // Double tick (grey by default)
+                receiptHtml = `<span class="read-receipt sent">✓✓</span>`;
+            }
+
+            div.innerHTML = `${text}<div class="msg-time">${time} ${receiptHtml}</div>`;
         }
-        
-        chatBox.appendChild(div);
+
+        // Insert before typing indicator
+        chatBox.insertBefore(div, typingIndicator);
         chatBox.scrollTop = chatBox.scrollHeight;
     }
 
@@ -443,15 +514,12 @@
 
         try {
             localStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
-            
-            if (type === 'audio') {
-                localStream.getVideoTracks().forEach(track => track.enabled = false);
-            }
+            if (type === 'audio') localStream.getVideoTracks().forEach(track => track.enabled = false);
 
             const call = peer.call(conn.peer, localStream, { metadata: { type: type } });
             setupCall(call);
             showCallScreen(conn.peer, type);
-            playDialTone(); // Caller hears dial tone
+            playDialTone(); 
         } catch (err) {
             appendMsg("System", "Camera/Mic permission denied!");
             stopAllTones();
@@ -461,17 +529,14 @@
     async function answerCall() {
         if (!pendingCall) return;
         document.getElementById('incomingCallPopup').classList.remove('active');
-        stopAllTones(); // Stop ringing when answered
-        
+        stopAllTones(); 
+
         isMicOn = true;
         isCamOn = (pendingCall.metadata.type === 'video');
 
         try {
             localStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
-            
-            if (pendingCall.metadata.type === 'audio') {
-                localStream.getVideoTracks().forEach(track => track.enabled = false);
-            }
+            if (pendingCall.metadata.type === 'audio') localStream.getVideoTracks().forEach(track => track.enabled = false);
 
             pendingCall.answer(localStream);
             setupCall(pendingCall);
@@ -497,17 +562,22 @@
         call.on('stream', rStream => {
             remoteVideo.srcObject = rStream;
             document.getElementById('callStatusText').innerText = "Connected";
-            stopAllTones(); // Stop dial tone when connection establishes
+            stopAllTones(); 
+        });
+
+        call.on('close', () => {
+            hangUp(false); // 'false' means it's triggered automatically, so don't send signal again
         });
         
-        call.on('close', hangUp);
-        call.on('error', hangUp);
+        call.on('error', () => {
+            hangUp(false);
+        });
     }
 
     function showCallScreen(partnerName, type) {
         document.getElementById('callNameDisplay').innerText = partnerName;
         document.getElementById('callStatusText').innerText = "Calling...";
-        
+
         if (type === 'video') {
             callVideos.classList.add('active');
             localVideo.srcObject = localStream;
@@ -516,20 +586,26 @@
             callVideos.classList.remove('active');
             document.getElementById('pttBtn').style.display = 'block';
         }
-        
+
         callScreen.classList.add('active');
         updateCallUI();
     }
 
-    function hangUp() {
+    // Added 'initiatedByUser' flag to prevent infinite signaling loops
+    function hangUp(initiatedByUser = true) {
         if (activeCall) activeCall.close();
         activeCall = null;
-        
+
+        // Signal the other peer to hang up too (only if I pressed the button)
+        if (initiatedByUser && conn && conn.open) {
+            conn.send({ type: 'call-end' });
+        }
+
         if (localStream) {
             localStream.getTracks().forEach(track => track.stop());
             localStream = null;
         }
-        
+
         localVideo.srcObject = null;
         remoteVideo.srcObject = null;
         callVideos.classList.remove('active');
@@ -557,7 +633,7 @@
     function updateCallUI() {
         document.getElementById('micBtn').classList.toggle('active', !isMicOn);
         document.getElementById('micBtn').innerText = isMicOn ? '🎤' : '🔇';
-        
+
         document.getElementById('camBtn').classList.toggle('active', !isCamOn);
         document.getElementById('camBtn').innerText = isCamOn ? '📷' : '🚫';
     }
@@ -582,13 +658,11 @@
 
     pttBtn.addEventListener('mouseup', stopPtt);
     pttBtn.addEventListener('mouseleave', stopPtt);
-    pttBtn.addEventListener('touchend', stopPtt); // Added for mobile
+    pttBtn.addEventListener('touchend', stopPtt); 
 
-    // Resume audio context on first click (Browser autoplay policy)
+    // Resume audio context on first click
     document.addEventListener('click', () => {
-        if (audioCtx.state === 'suspended') {
-            audioCtx.resume();
-        }
+        if (audioCtx.state === 'suspended') audioCtx.resume();
     }, { once: true });
 
 </script>
