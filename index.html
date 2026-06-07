@@ -10,11 +10,9 @@
         :root { --wa-green: #00a884; --wa-dark: #111b21; --wa-chat-bg: #0b141a; --wa-input-bg: #2a3942; --wa-bubble-me: #005c4b; --wa-bubble-friend: #202c33; --wa-text: #e9edef; --wa-gray: #8696a0; --wa-danger: #ea4335; }
         * { box-sizing: border-box; margin: 0; padding: 0; }
 
-        /* Dynamic VH for mobile keyboard issue */
         html, body { height: 100%; height: 100dvh; overflow: hidden; }
         body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: var(--wa-dark); color: var(--wa-text); display: flex; flex-direction: column; }
 
-        /* Header */
         .header { background: #202c33; padding: 10px 16px; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid #2a3942; z-index: 10; flex-shrink: 0; }
         .header-title { font-size: 16px; font-weight: bold; color: var(--wa-text); display: flex; align-items: center; gap: 10px; }
         .header-title span { color: var(--wa-green); }
@@ -22,10 +20,8 @@
         .icon-btn { background: none; border: none; color: var(--wa-gray); font-size: 20px; cursor: pointer; padding: 5px; border-radius: 50%; transition: 0.2s; }
         .icon-btn:hover { color: var(--wa-text); }
 
-        /* Main Container - Fixed Flex Structure */
         .main-container { display: flex; flex-direction: column; flex: 1; min-height: 0; overflow: hidden; position: relative; }
 
-        /* Sidebar */
         .sidebar { background: var(--wa-dark); display: flex; flex-direction: column; flex-shrink: 0; z-index: 5; }
         .sidebar.hidden { display: none; }
 
@@ -36,7 +32,6 @@
         #qrcode img { display: block; }
         .my-id-display { font-size: 11px; color: var(--wa-green); margin-top: 8px; cursor: pointer; }
 
-        /* Chat Area */
         .chat-area { flex: 1; display: flex; flex-direction: column; background: var(--wa-chat-bg); min-height: 0; overflow: hidden; }
         .chat-header { background: #202c33; padding: 10px 16px; display: flex; align-items: center; justify-content: space-between; flex-shrink: 0; }
         .chat-user-info { display: flex; flex-direction: column; }
@@ -46,7 +41,7 @@
         .call-btn { background: none; border: none; color: var(--wa-gray); font-size: 22px; cursor: pointer; transition: 0.2s; }
         .call-btn:hover { color: var(--wa-green); }
 
-        .chat-bg { flex: 1; overflow-y: auto; padding: 15px; background-image: url('https://upload.wikimedia.org/wikipedia/commons/5/56/WhatsApp_chat_background_image.jpg'); background-size: cover; opacity: 0.9; display: flex; flex-direction: column; gap: 5px; min-height: 0; }
+        .chat-bg { flex: 1; overflow-y: auto; padding: 15px; background-image: url('https://upload.wikimedia.org/wikipedia/commons/5/56/WhatsApp_chat_background_image.jpg'); background-size: cover; opacity: 0.9; display: flex; flex-direction: column; gap: 5px; min-height: 0; -webkit-overflow-scrolling: touch; }
         .chat-bg::-webkit-scrollbar { width: 6px; }
         .chat-bg::-webkit-scrollbar-thumb { background: #374045; border-radius: 10px; }
 
@@ -56,14 +51,12 @@
         .msg.system { background: transparent; color: var(--wa-gray); align-self: center; font-size: 12px; padding: 5px; border-radius: 5px; text-align: center; max-width: 90%; }
         .msg-time { font-size: 11px; color: rgba(255,255,255,0.5); text-align: right; margin-top: 4px; display: flex; align-items: center; justify-content: flex-end; gap: 4px; }
         
-        /* Read Receipts */
         .read-receipt { font-size: 14px; line-height: 1; }
-        .read-receipt.sent { color: rgba(255,255,255,0.4); } /* Grey Double Tick */
-        .read-receipt.read { color: #53bdeb; } /* Blue Double Tick */
+        .read-receipt.sent { color: rgba(255,255,255,0.4); }
+        .read-receipt.read { color: #53bdeb; }
         
         .file-link { color: #fff; text-decoration: underline; display: inline-block; margin-top: 5px; background: rgba(0,0,0,0.2); padding: 3px 8px; border-radius: 4px; }
 
-        /* Typing Indicator */
         .typing-indicator { display: none; align-self: flex-start; background: var(--wa-bubble-friend); padding: 10px 15px; border-radius: 8px; border-top-left-radius: 0; }
         .typing-indicator.active { display: flex; align-items: center; gap: 4px; }
         .typing-dot { width: 6px; height: 6px; background: var(--wa-gray); border-radius: 50%; animation: typingAnim 1.4s infinite; }
@@ -71,14 +64,12 @@
         .typing-dot:nth-child(3) { animation-delay: 0.4s; }
         @keyframes typingAnim { 0%, 60%, 100% { transform: translateY(0); } 30% { transform: translateY(-5px); } }
 
-        /* Input Area */
         .input-area { background: #202c33; padding: 8px 16px; display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
         .input-area input[type="text"] { flex: 1; background: var(--wa-input-bg); border: none; padding: 10px 15px; border-radius: 8px; color: white; outline: none; font-size: 14px; }
         .attach-btn { background: none; border: none; color: var(--wa-gray); font-size: 24px; cursor: pointer; transition: 0.2s; flex-shrink: 0; }
         .attach-btn:hover { color: var(--wa-text); }
         .send-btn { background: var(--wa-green); border: none; color: white; width: 40px; height: 40px; border-radius: 50%; cursor: pointer; font-size: 18px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
 
-        /* Incoming Call Popup */
         .incoming-call-popup { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(17, 27, 33, 0.98); z-index: 9999; display: none; flex-direction: column; align-items: center; justify-content: center; text-align: center; }
         .incoming-call-popup.active { display: flex; }
         .inc-avatar { width: 100px; height: 100px; background: var(--wa-input-bg); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 50px; margin-bottom: 20px; animation: pulse 1.5s infinite; }
@@ -87,7 +78,6 @@
         .inc-btn.accept { background: var(--wa-green); }
         .inc-btn.reject { background: var(--wa-danger); }
 
-        /* Call Screen Overlay */
         .call-screen { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: var(--wa-dark); z-index: 9998; display: none; flex-direction: column; align-items: center; justify-content: space-between; padding: 50px 20px; }
         .call-screen.active { display: flex; }
         .call-top { text-align: center; }
@@ -153,7 +143,6 @@
             </div>
 
             <div class="chat-bg" id="chatBox">
-                <!-- Typing Indicator -->
                 <div class="typing-indicator" id="typingIndicator">
                     <div class="typing-dot"></div>
                     <div class="typing-dot"></div>
@@ -211,7 +200,6 @@
     let isCamOn = true;
     let callType = 'video'; 
 
-    // State for Typing & Read Receipts
     let lastSentMsgId = null;
     let typingTimeout = null;
     let isTyping = false;
@@ -222,6 +210,12 @@
     const remoteVideo = document.getElementById('remoteVideo');
     const callScreen = document.getElementById('callScreen');
     const callVideos = document.getElementById('callVideos');
+
+    // --- FIX: Stable Chat Scroll Logic ---
+    function isNearBottom() {
+        const threshold = 150; // If user is within 150px of the bottom, auto-scroll
+        return chatBox.scrollHeight - chatBox.scrollTop - chatBox.clientHeight < threshold;
+    }
 
     // --- AUDIO RINGTONE GENERATOR ---
     const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
@@ -356,21 +350,27 @@
                 const url = URL.createObjectURL(blob);
                 const isImage = data.fileType.startsWith('image/');
                 if (isImage) {
-                    appendMsg("Friend", `<img src="${url}" style="max-width:100%; border-radius:8px; margin-bottom:5px;"><br><a href="${url}" download="${data.fileName}" class="file-link">📥 ${data.fileName}</a>`, null, true); // mark file messages as read immediately
+                    appendMsg("Friend", `<img src="${url}" style="max-width:100%; border-radius:8px; margin-bottom:5px;"><br><a href="${url}" download="${data.fileName}" class="file-link">📥 ${data.fileName}</a>`, null, true);
                 } else {
                     appendMsg("Friend", `📄 Document: <a href="${url}" download="${data.fileName}" class="file-link">📥 ${data.fileName}</a>`, null, true);
                 }
-                sendReadReceipt(data.msgId); // Send read receipt for files
+                sendReadReceipt(data.msgId);
             } 
             else if (data.type === 'text') {
                 appendMsg("Friend", data.text, data.msgId);
-                sendReadReceipt(data.msgId); // Send read receipt for text
+                sendReadReceipt(data.msgId); 
             } 
             else if (data.type === 'read-receipt') {
-                markMsgAsRead(data.msgId); // Update UI for sent message
+                markMsgAsRead(data.msgId); 
             } 
             else if (data.type === 'typing') {
-                showTypingIndicator(data.isTyping); // Show/hide typing dots
+                showTypingIndicator(data.isTyping); 
+            }
+            // --- FIX: Receive hangup signal ---
+            else if (data.type === 'call-end') {
+                if (activeCall) {
+                    hangUp(false); // End call without sending the signal back
+                }
             }
         });
 
@@ -391,13 +391,11 @@
             appendMsg("Me", msg, msgId);
             document.getElementById('chatInput').value = "";
             
-            // Stop typing indicator
             isTyping = false;
             conn.send({ type: 'typing', isTyping: false });
         }
     }
 
-    // --- TYPING INDICATOR LOGIC ---
     function handleTyping() {
         if (!conn || !conn.open) return;
         
@@ -410,7 +408,7 @@
         typingTimeout = setTimeout(() => {
             isTyping = false;
             conn.send({ type: 'typing', isTyping: false });
-        }, 2000); // Stop showing typing after 2 seconds of inactivity
+        }, 2000); 
     }
 
     function showTypingIndicator(show) {
@@ -418,7 +416,8 @@
             typingIndicator.classList.add('active');
             document.getElementById('chatPartnerStatus').innerText = "typing...";
             document.getElementById('chatPartnerStatus').style.color = "var(--wa-green)";
-            chatBox.scrollTop = chatBox.scrollHeight;
+            // Only scroll down if user is already at the bottom
+            if(isNearBottom()) chatBox.scrollTop = chatBox.scrollHeight;
         } else {
             typingIndicator.classList.remove('active');
             document.getElementById('chatPartnerStatus').innerText = "Online";
@@ -426,7 +425,6 @@
         }
     }
 
-    // --- READ RECEIPT LOGIC ---
     function sendReadReceipt(msgId) {
         if (conn && conn.open && msgId) {
             conn.send({ type: 'read-receipt', msgId: msgId });
@@ -439,7 +437,7 @@
             const tick = msgElement.querySelector('.read-receipt');
             if (tick) {
                 tick.classList.remove('sent');
-                tick.classList.add('read'); // Turn ticks blue
+                tick.classList.add('read'); 
             }
         }
     }
@@ -491,7 +489,6 @@
 
             let receiptHtml = '';
             if (user === "Me") {
-                // Double tick (grey by default)
                 receiptHtml = `<span class="read-receipt sent">✓✓</span>`;
             }
 
@@ -500,7 +497,11 @@
 
         // Insert before typing indicator
         chatBox.insertBefore(div, typingIndicator);
-        chatBox.scrollTop = chatBox.scrollHeight;
+        
+        // --- FIX: Scroll only if near bottom ---
+        if (isNearBottom()) {
+            chatBox.scrollTop = chatBox.scrollHeight;
+        }
     }
 
     // --- CALL LOGIC ---
@@ -566,11 +567,12 @@
         });
 
         call.on('close', () => {
-            hangUp(false); // 'false' means it's triggered automatically, so don't send signal again
+            // If the call closes naturally (e.g., network drop), handle it
+            if (activeCall) hangUp(false); 
         });
         
         call.on('error', () => {
-            hangUp(false);
+            if (activeCall) hangUp(false);
         });
     }
 
@@ -591,23 +593,27 @@
         updateCallUI();
     }
 
-    // Added 'initiatedByUser' flag to prevent infinite signaling loops
     function hangUp(initiatedByUser = true) {
-        if (activeCall) activeCall.close();
-        activeCall = null;
-
         // Signal the other peer to hang up too (only if I pressed the button)
         if (initiatedByUser && conn && conn.open) {
             conn.send({ type: 'call-end' });
         }
 
+        if (activeCall) {
+            activeCall.close();
+            activeCall = null;
+        }
+
+        // Stop all media tracks properly
         if (localStream) {
             localStream.getTracks().forEach(track => track.stop());
             localStream = null;
         }
-
+        
+        // Clear video sources to free up camera/mic hardware
         localVideo.srcObject = null;
         remoteVideo.srcObject = null;
+
         callVideos.classList.remove('active');
         callScreen.classList.remove('active');
         document.getElementById('incomingCallPopup').classList.remove('active');
@@ -638,7 +644,6 @@
         document.getElementById('camBtn').innerText = isCamOn ? '📷' : '🚫';
     }
 
-    // Walkie Talkie for Audio Call
     const pttBtn = document.getElementById('pttBtn');
     pttBtn.addEventListener('mousedown', () => {
         if (!localStream || !activeCall) return;
@@ -660,7 +665,6 @@
     pttBtn.addEventListener('mouseleave', stopPtt);
     pttBtn.addEventListener('touchend', stopPtt); 
 
-    // Resume audio context on first click
     document.addEventListener('click', () => {
         if (audioCtx.state === 'suspended') audioCtx.resume();
     }, { once: true });
